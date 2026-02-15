@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { pool, initDB } = require('./config/database');
 
 // Load environment variables
 dotenv.config();
@@ -9,30 +10,52 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors()); // Allow cross-origin requests
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Test route
+// Initialize database connection
+let dbConnected = false;
+
+// Test route with DB status
 app.get('/', (req, res) => {
   res.json({ 
     message: '🏥 Medi Online Clinic API',
     status: 'running',
+    database: dbConnected ? 'connected' : 'disconnected',
     timestamp: new Date().toISOString()
   });
 });
 
-// API health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy',
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
-    database: 'not connected' // We'll update this later
-  });
+// API health check with detailed status
+app.get('/api/health', async (req, res) => {
+  try {
+    // Test database with simple query
+    const dbTest = dbConnected ? await pool.query('SELECT NOW() as time') : null;
+    
+    res.json({ 
+      status: 'healthy',
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: {
+        connected: dbConnected,
+        timestamp: dbTest?.rows[0]?.time || null
+      },
+      memory: process.memoryUsage()
+    });
+  } catch (error) {
+    res.json({ 
+      status: 'degraded',
+      uptime: process.uptime(),
+      database: {
+        connected: false,
+        error: error.message
+      }
+    });
+  }
 });
 
-// ✅ FIXED: 404 handler - for all unmatched routes
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({ 
     error: 'Route not found',
@@ -54,13 +77,23 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
+// Start server with database initialization
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`
+
+const startServer = async () => {
+  // Initialize database
+  dbConnected = await initDB();
+  
+  // Start listening
+  app.listen(PORT, () => {
+    console.log(`
   🚀 Server is running!
   📡 Port: ${PORT}
   🔗 http://localhost:${PORT}
   📊 Health: http://localhost:${PORT}/api/health
-  `);
-});
+  💾 Database: ${dbConnected ? '✅ Connected' : '❌ Disconnected'}
+    `);
+  });
+};
+
+startServer();
