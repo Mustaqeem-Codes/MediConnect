@@ -1,5 +1,4 @@
-/* frontend/src/styles/home/Hero.css */
-/* ===== MediConnect Hero Section ===== */
+/* ===== MediConnect Hero Section - Fully Mobile Optimized ===== */
 /* Namespaced with mc-hero to prevent conflicts */
 
 :root {
@@ -55,6 +54,7 @@
   align-items: center;
 }
 
+/* Left Content */
 .mc-hero__content {
   max-width: 600px;
 }
@@ -78,7 +78,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .mc-hero__badge-text {
@@ -249,7 +249,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .mc-hero__trust-text {
@@ -258,16 +258,19 @@
   font-weight: 500;
 }
 
-/* Stats */
+/* Stats - Always in one row */
 .mc-hero__stats-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 1rem;
   padding-top: 1rem;
   border-top: 2px solid var(--mc-border);
 }
 
 .mc-hero__stat-item {
+  flex: 1 1 0;
+  min-width: 0; /* prevent overflow from long numbers */
   text-align: left;
 }
 
@@ -277,6 +280,7 @@
   color: var(--mc-primary);
   line-height: 1.2;
   margin-bottom: 0.25rem;
+  white-space: nowrap;
 }
 
 .mc-hero__stat-label {
@@ -285,6 +289,7 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 /* Right Content - Image */
@@ -318,7 +323,7 @@
   transform: scale(1.05);
 }
 
-/* Floating Cards */
+/* Floating Cards - Desktop */
 .mc-hero__floating-card {
   position: absolute;
   background: white;
@@ -332,6 +337,7 @@
   backdrop-filter: blur(4px);
   background: rgba(255, 255, 255, 0.95);
   animation: mc-float 3s ease-in-out infinite;
+  white-space: nowrap;
 }
 
 .mc-hero__floating-card--1 {
@@ -396,13 +402,10 @@
   50% { transform: translateY(-10px); }
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .mc-hero__grid {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
+/* ===== RESPONSIVE BREAKPOINTS ===== */
 
+/* Large tablets / small desktops (between 769px and 1024px) - keep two columns */
+@media (min-width: 769px) and (max-width: 1024px) {
   .mc-hero__title {
     font-size: 2.8rem;
   }
@@ -410,11 +413,25 @@
   .mc-hero__image-container {
     height: 500px;
   }
+
+  /* Adjust floating cards to stay inside container */
+  .mc-hero__floating-card--1 {
+    left: 0%;
+  }
+  .mc-hero__floating-card--2 {
+    right: 0%;
+  }
 }
 
+/* Tablet portrait and below - stack layout */
 @media (max-width: 768px) {
   .mc-hero {
     padding: 6rem 0 3rem;
+  }
+
+  .mc-hero__grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
 
   .mc-hero__title {
@@ -425,8 +442,24 @@
     grid-template-columns: 1fr;
   }
 
+  /* Left content centered and full width */
+  .mc-hero__content {
+    max-width: 100%;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  /* Center trust indicators and stats */
+  .mc-hero__trust-indicators {
+    justify-content: center;
+  }
+
   .mc-hero__stats-container {
-    grid-template-columns: repeat(2, 1fr);
+    justify-content: center;
+  }
+
+  .mc-hero__stat-item {
+    text-align: center;
   }
 
   .mc-hero__image-container {
@@ -434,16 +467,64 @@
   }
 }
 
-@media (max-width: 480px) {
+/* Large Phones */
+@media (max-width: 640px) {
+  .mc-hero__container {
+    padding: 0 1.5rem;
+  }
+
   .mc-hero__title {
-    font-size: 1.8rem;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .mc-hero__subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Search Form - 10px margin on both sides, full remaining width */
+  .mc-hero__search-form {
+    margin-left: 10px;
+    margin-right: 10px;
+    width: calc(100% - 20px);
+    padding: 1.25rem;
+  }
+
+  .mc-hero__trust-indicators {
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .mc-hero__trust-text {
+    font-size: 0.85rem;
+  }
+
+  /* Stats adjustments to keep in one line */
+  .mc-hero__stats-container {
+    gap: 0.5rem;
+  }
+
+  .mc-hero__stat-number {
+    font-size: 1.5rem;
+  }
+
+  .mc-hero__stat-label {
+    font-size: 0.7rem;
   }
 
   .mc-hero__image-container {
-    height: 300px;
+    height: 350px;
   }
 
-  .mc-hero__floating-card {
+  /* Reduce number of floating cards on mobile to avoid clutter */
+  .mc-hero__floating-card--3,
+  .mc-hero__floating-card--4 {
+    display: none;
+  }
+
+  .mc-hero__floating-card--1,
+  .mc-hero__floating-card--2 {
     padding: 0.5rem 1rem;
   }
 
@@ -451,5 +532,136 @@
     width: 32px;
     height: 32px;
     font-size: 1.2rem;
+  }
+
+  .mc-hero__card-title {
+    font-size: 0.85rem;
+  }
+
+  .mc-hero__card-subtitle {
+    font-size: 0.7rem;
+  }
+}
+
+/* Small Phones */
+@media (max-width: 480px) {
+  .mc-hero__container {
+    padding: 0 1rem;
+  }
+
+  .mc-hero__title {
+    font-size: 1.8rem;
+  }
+
+  .mc-hero__title-highlight::after {
+    height: 0.4rem;
+    bottom: 0.3rem;
+  }
+
+  .mc-hero__trust-badge {
+    padding: 0.4rem 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .mc-hero__badge-text {
+    font-size: 0.8rem;
+  }
+
+  .mc-hero__search-form {
+    margin-left: 10px;
+    margin-right: 10px;
+    width: calc(100% - 20px);
+    padding: 1rem;
+  }
+
+  .mc-hero__search-select,
+  .mc-hero__search-input {
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  .mc-hero__search-button {
+    padding: 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  .mc-hero__trust-indicators {
+    gap: 0.75rem;
+  }
+
+  .mc-hero__trust-item {
+    gap: 0.3rem;
+  }
+
+  .mc-hero__trust-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+  }
+
+  .mc-hero__trust-text {
+    font-size: 0.8rem;
+  }
+
+  /* Shrink stats further to keep one row */
+  .mc-hero__stat-number {
+    font-size: 1.3rem;
+  }
+
+  .mc-hero__stat-label {
+    font-size: 0.6rem;
+  }
+
+  .mc-hero__image-container {
+    height: 300px;
+  }
+
+  .mc-hero__floating-card--1,
+  .mc-hero__floating-card--2 {
+    padding: 0.4rem 0.8rem;
+  }
+
+  .mc-hero__card-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+}
+
+/* Extra Small Phones */
+@media (max-width: 360px) {
+  .mc-hero__container {
+    padding: 0 0.5rem;
+  }
+
+  .mc-hero__title {
+    font-size: 1.6rem;
+  }
+
+  .mc-hero__search-form {
+    margin-left: 10px;
+    margin-right: 10px;
+    width: calc(100% - 20px);
+  }
+
+  .mc-hero__trust-indicators {
+    gap: 0.5rem;
+  }
+
+  .mc-hero__trust-item {
+    flex: 1 1 auto;
+  }
+
+  .mc-hero__trust-text {
+    font-size: 0.7rem;
+  }
+
+  /* Stats: one line maintained with tiny font */
+  .mc-hero__stat-number {
+    font-size: 1.1rem;
+  }
+
+  .mc-hero__stat-label {
+    font-size: 0.5rem;
   }
 }
