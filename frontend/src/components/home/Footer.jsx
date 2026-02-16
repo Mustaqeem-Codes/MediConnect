@@ -154,32 +154,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Newsletter Section */}
-        <div className="mc-footer__newsletter">
-          <div className="mc-footer__newsletter-content">
-            <h4 className="mc-footer__newsletter-title">Subscribe to our newsletter</h4>
-            <p className="mc-footer__newsletter-text">
-              Get health tips, doctor updates, and exclusive offers delivered to your inbox.
-            </p>
-          </div>
-          <form className="mc-footer__newsletter-form">
-            <div className="mc-footer__newsletter-input-group">
-              <input 
-                type="email" 
-                placeholder="Enter your email" 
-                className="mc-footer__newsletter-input"
-                aria-label="Email address"
-              />
-              <button type="submit" className="mc-footer__newsletter-button">
-                Subscribe
-              </button>
-            </div>
-            <p className="mc-footer__newsletter-note">
-              We respect your privacy. Unsubscribe at any time.
-            </p>
-          </form>
-        </div>
-
         {/* Bottom Bar */}
         <div className="mc-footer__bottom">
           <div className="mc-footer__copyright">
