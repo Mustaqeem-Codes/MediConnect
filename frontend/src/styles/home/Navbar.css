@@ -219,7 +219,7 @@ body {
   border: none;
   cursor: pointer;
   padding: 0;
-  z-index: 1001;
+  z-index: 1005;
   outline: none; /* Remove default focus outline */
 }
 
@@ -264,7 +264,7 @@ body {
   transition:
     opacity 0.3s ease,
     visibility 0.3s ease;
-  z-index: 1000;
+  z-index: 1003;
 }
 
 .mobile-menu-overlay.active {
@@ -377,6 +377,7 @@ body {
 
   .mobile-menu-btn {
     display: flex;
+    z-index: 1005;
   }
 
   .navbar-container {
