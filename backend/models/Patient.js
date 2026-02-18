@@ -55,6 +55,33 @@ class Patient {
     return result.rows[0];
   }
 
+  // Update patient profile
+  static async update(id, updateData) {
+    const { name, phone, date_of_birth } = updateData;
+    const query = `
+      UPDATE patients
+      SET name = $1,
+          phone = $2,
+          date_of_birth = $3,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $4
+      RETURNING id, name, email, phone, date_of_birth, is_verified, created_at, updated_at
+    `;
+    const values = [name, phone, date_of_birth || null, id];
+
+    try {
+      const result = await pool.query(query, values);
+      return result.rows[0];
+    } catch (error) {
+      if (error.code === '23505') {
+        if (error.constraint === 'patients_phone_key') {
+          throw new Error('Phone number already registered');
+        }
+      }
+      throw error;
+    }
+  }
+
   // Verify password
   static async verifyPassword(plainPassword, hashedPassword) {
     return await bcrypt.compare(plainPassword, hashedPassword);

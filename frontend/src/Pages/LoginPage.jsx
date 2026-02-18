@@ -7,11 +7,6 @@ import logoImage from '../assets/MC Logo.png';
 import '../styles/LoginPage.css';
 
 const LoginPage = () => {
-  const handleLoginSuccess = (userData) => {
-    console.log('Login successful:', userData);
-    window.location.href = '/';
-  };
-
   return (
     <div className="login-page">
       <div className="login-page-container">
@@ -34,7 +29,7 @@ const LoginPage = () => {
 
         {/* Right Column - Form */}
         <div className="login-form-column">
-          <LoginForm onLoginSuccess={handleLoginSuccess} />
+          <LoginForm />
           <SocialLoginButtons />
           
           {/* Sign up link */}

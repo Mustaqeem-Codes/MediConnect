@@ -1,103 +1,127 @@
-// frontend/src/components/auth/PatientRegisterForm.jsx
-import React, { useState } from 'react';
-import '../../styles/auth//PatientRegisterForm.css';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import '../../styles/auth/PatientRegisterForm.css';
 
 const PatientRegisterForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     password: '',
-    confirmPassword: '',
-    agreeTerms: false
+    date_of_birth: '',
   });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const validate = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-    if (!formData.agreeTerms) newErrors.agreeTerms = 'You must agree to the terms';
-    return newErrors;
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    setError('');
+    setLoading(true);
+
+    // Basic frontend validation
+    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
+      setError('Please fill in all required fields.');
+      setLoading(false);
       return;
     }
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Patient data:', formData);
-      setIsLoading(false);
-      // Redirect or show success
-    }, 1500);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/patients/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle validation errors from backend
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      // Success – store token and route to dashboard
+      localStorage.setItem('token', data.data.token);
+      localStorage.setItem('user', JSON.stringify(data.data));
+      navigate('/dashboard/patient');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="patient-form-container">
-      <form onSubmit={handleSubmit} className="patient-form">
+      <form onSubmit={handleSubmit}>
         <h2 className="patient-form-title">Create Patient Account</h2>
-        {errors.general && <div className="patient-error-general">{errors.general}</div>}
-
+        {error && <div className="patient-error-general">{error}</div>}
         <div className="patient-field">
-          <label className="patient-label">Full Name</label>
-          <input type="text" name="name" value={formData.name} onChange={handleChange} className={`patient-input ${errors.name ? 'error' : ''}`} placeholder="John Doe" />
-          {errors.name && <span className="patient-error">{errors.name}</span>}
+          <label className="patient-label" htmlFor="name">Full Name *</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          className="patient-input"
+        />
         </div>
-
         <div className="patient-field">
-          <label className="patient-label">Email</label>
-          <input type="email" name="email" value={formData.email} onChange={handleChange} className={`patient-input ${errors.email ? 'error' : ''}`} placeholder="john@example.com" />
-          {errors.email && <span className="patient-error">{errors.email}</span>}
+          <label className="patient-label" htmlFor="email">Email *</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+          className="patient-input"
+        />
         </div>
-
         <div className="patient-field">
-          <label className="patient-label">Phone Number</label>
-          <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className={`patient-input ${errors.phone ? 'error' : ''}`} placeholder="+1 234 567 890" />
-          {errors.phone && <span className="patient-error">{errors.phone}</span>}
+          <label className="patient-label" htmlFor="phone">Phone Number *</label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+          required
+          className="patient-input"
+        />
         </div>
-
         <div className="patient-field">
-          <label className="patient-label">Password</label>
-          <input type="password" name="password" value={formData.password} onChange={handleChange} className={`patient-input ${errors.password ? 'error' : ''}`} placeholder="••••••••" />
-          {errors.password && <span className="patient-error">{errors.password}</span>}
+          <label className="patient-label" htmlFor="password">Password *</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+          minLength="6"
+          className="patient-input"
+        />
         </div>
-
         <div className="patient-field">
-          <label className="patient-label">Confirm Password</label>
-          <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className={`patient-input ${errors.confirmPassword ? 'error' : ''}`} placeholder="••••••••" />
-          {errors.confirmPassword && <span className="patient-error">{errors.confirmPassword}</span>}
+          <label className="patient-label" htmlFor="date_of_birth">Date of Birth (optional)</label>
+        <input
+          type="date"
+          id="date_of_birth"
+          name="date_of_birth"
+          value={formData.date_of_birth}
+          onChange={handleChange}
+          className="patient-input"
+        />
         </div>
-
-        <div className="patient-field patient-terms">
-          <label className="patient-checkbox">
-            <input type="checkbox" name="agreeTerms" checked={formData.agreeTerms} onChange={handleChange} />
-            <span>I agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a></span>
-          </label>
-          {errors.agreeTerms && <span className="patient-error">{errors.agreeTerms}</span>}
-        </div>
-
-        <button type="submit" className="patient-submit" disabled={isLoading}>
-          {isLoading ? 'Creating...' : 'Sign Up as Patient'}
+        <button type="submit" className="patient-submit" disabled={loading}>
+          {loading ? 'Registering...' : 'Register'}
         </button>
       </form>
     </div>

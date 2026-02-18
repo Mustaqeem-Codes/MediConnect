@@ -93,3 +93,15 @@ medi-online-clinic/
    ```bash
    git clone https://github.com/yourusername/medi-online-clinic.git
    cd medi-online-clinic
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   # Install Backend Dependencies
+   cd backend
+   npm install
+
+   # Install Frontend Dependencies
+   cd ../frontend
+   npm install
+   ```

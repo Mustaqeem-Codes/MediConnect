@@ -62,6 +62,7 @@ const registerPatient = async (req, res) => {
         phone: patient.phone,
         date_of_birth: patient.date_of_birth,
         is_verified: patient.is_verified,
+        role: 'patient',
         token
       }
     });
@@ -126,6 +127,7 @@ const loginPatient = async (req, res) => {
         phone: patient.phone,
         date_of_birth: patient.date_of_birth,
         is_verified: patient.is_verified,
+        role: 'patient',
         token
       }
     });
@@ -162,8 +164,46 @@ const getProfile = async (req, res) => {
   }
 };
 
+// @desc    Update current patient profile
+// @route   PUT /api/patients/profile
+// @access  Private
+const updateProfile = async (req, res) => {
+  try {
+    const { name, phone, date_of_birth } = req.body;
+
+    if (!name || !phone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide name and phone'
+      });
+    }
+
+    const updated = await Patient.update(req.user.id, {
+      name,
+      phone,
+      date_of_birth
+    });
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        error: 'Patient not found'
+      });
+    }
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Server error'
+    });
+  }
+};
+
 module.exports = {
   registerPatient,
   loginPatient,
-  getProfile
+  getProfile,
+  updateProfile
 };

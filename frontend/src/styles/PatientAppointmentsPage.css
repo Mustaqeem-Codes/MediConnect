@@ -1,0 +1,50 @@
+.mc-patient-appointments {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  background: #F5F8FB;
+}
+
+.mc-patient-appointments__content {
+  padding: 3rem 2.5rem;
+}
+
+.mc-patient-appointments__header {
+  margin-bottom: 2rem;
+}
+
+.mc-patient-appointments__header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  color: var(--text, #0A192F);
+}
+
+.mc-patient-appointments__header p {
+  margin: 0;
+  color: var(--text-light, #2D3A5E);
+}
+
+.mc-patient-appointments__state,
+.mc-patient-appointments__error {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border, #E1E8F0);
+  margin-bottom: 1.5rem;
+}
+
+.mc-patient-appointments__error {
+  border-color: #FECACA;
+  background: #FEF2F2;
+  color: #B91C1C;
+}
+
+@media (max-width: 960px) {
+  .mc-patient-appointments {
+    grid-template-columns: 1fr;
+  }
+
+  .mc-patient-appointments__content {
+    padding: 2rem 1.5rem;
+  }
+}

@@ -1,0 +1,62 @@
+.mc-doctor-messages {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  background: #F5F8FB;
+}
+
+.mc-doctor-messages__content {
+  padding: 3rem 2.5rem;
+}
+
+.mc-doctor-messages__header {
+  margin-bottom: 2rem;
+}
+
+.mc-doctor-messages__header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  color: var(--text, #0A192F);
+}
+
+.mc-doctor-messages__header p {
+  margin: 0;
+  color: var(--text-light, #2D3A5E);
+}
+
+.mc-doctor-messages__card {
+  background: white;
+  padding: 2rem;
+  border-radius: 18px;
+  border: 1px solid rgba(225, 232, 240, 0.8);
+  box-shadow: 0 12px 30px rgba(10, 25, 47, 0.08);
+  display: grid;
+  gap: 1.2rem;
+  justify-items: start;
+}
+
+.mc-doctor-messages__empty {
+  margin: 0;
+  color: var(--text-light, #2D3A5E);
+  font-weight: 600;
+}
+
+.mc-doctor-messages__cta {
+  border: none;
+  background: var(--accent, #00A896);
+  color: white;
+  padding: 0.7rem 1.3rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 960px) {
+  .mc-doctor-messages {
+    grid-template-columns: 1fr;
+  }
+
+  .mc-doctor-messages__content {
+    padding: 2rem 1.5rem;
+  }
+}

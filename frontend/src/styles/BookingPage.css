@@ -1,0 +1,117 @@
+.mc-booking {
+  min-height: 100vh;
+  background: linear-gradient(180deg, rgba(30, 136, 229, 0.08) 0%, rgba(0, 168, 150, 0.05) 100%);
+  padding: 3rem 1.5rem 4rem;
+  color: var(--text, #0A192F);
+}
+
+.mc-booking__header {
+  max-width: 900px;
+  margin: 0 auto 2rem;
+}
+
+.mc-booking__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--text-light, #2D3A5E);
+  margin-bottom: 0.5rem;
+}
+
+.mc-booking__card {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 18px;
+  border: 1px solid rgba(225, 232, 240, 0.8);
+  box-shadow: 0 12px 30px rgba(10, 25, 47, 0.08);
+  display: grid;
+  gap: 2rem;
+}
+
+.mc-booking__error,
+.mc-booking__success {
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--border, #E1E8F0);
+  font-weight: 600;
+}
+
+.mc-booking__error {
+  border-color: #FECACA;
+  background: #FEF2F2;
+  color: #B91C1C;
+}
+
+.mc-booking__success {
+  border-color: #A7F3D0;
+  background: #ECFDF3;
+  color: #047857;
+}
+
+.mc-booking__summary h2 {
+  margin-top: 0;
+}
+
+.mc-booking__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.mc-booking__panel {
+  background: #F8FAFE;
+  border-radius: 14px;
+  padding: 1.2rem;
+}
+
+.mc-booking__textarea {
+  width: 100%;
+  border: 1px solid var(--border, #E1E8F0);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  resize: vertical;
+}
+
+.mc-booking__input {
+  width: 100%;
+  border: 1px solid var(--border, #E1E8F0);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+}
+
+.mc-booking__slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
+.mc-booking__slots button {
+  border: 1px solid var(--border, #E1E8F0);
+  background: white;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.mc-booking__slots button:hover {
+  border-color: var(--primary, #1E88E5);
+}
+
+.mc-booking__slots button.is-active {
+  background: rgba(30, 136, 229, 0.12);
+  border-color: var(--primary, #1E88E5);
+}
+
+.mc-booking__cta {
+  border: none;
+  background: var(--primary, #1E88E5);
+  color: white;
+  padding: 0.8rem 1.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  justify-self: start;
+}

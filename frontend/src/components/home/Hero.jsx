@@ -1,5 +1,6 @@
 // frontend/src/components/home/Hero.jsx
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import '../../styles/home/Hero.css';
 import heroImage from '../../assets/hero-image.webp';
 
@@ -13,6 +14,10 @@ const Hero = () => {
     appointments: 0,
     years: 0
   });
+  const [searchResults, setSearchResults] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+  const [searchError, setSearchError] = useState('');
 
   // Animate stats on load
   useEffect(() => {
@@ -62,10 +67,44 @@ const Hero = () => {
     'General Physician'
   ];
 
+  useEffect(() => {
+    const loadDoctors = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/doctors');
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load doctors');
+        }
+        setDoctors(data.data || []);
+      } catch (error) {
+        setSearchError(error.message);
+      }
+    };
+
+    loadDoctors();
+  }, []);
+
   const handleSearch = (e) => {
     e.preventDefault();
-    // Will connect to backend later
-    console.log('Searching:', { searchQuery, selectedSpecialty, location });
+    const normalizedName = searchQuery.trim().toLowerCase();
+    const normalizedLocation = location.trim().toLowerCase();
+
+    const results = doctors.filter((doctor) => {
+      const matchesName = normalizedName
+        ? doctor.name.toLowerCase().includes(normalizedName)
+        : true;
+      const matchesSpecialty = selectedSpecialty
+        ? doctor.specialty === selectedSpecialty
+        : true;
+      const matchesLocation = normalizedLocation
+        ? (doctor.location || '').toLowerCase().includes(normalizedLocation)
+        : true;
+
+      return matchesName && matchesSpecialty && matchesLocation;
+    });
+
+    setSearchResults(results);
+    setHasSearched(true);
   };
 
   return (
@@ -146,6 +185,44 @@ const Hero = () => {
                 <span className="mc-hero__button-icon">→</span>
               </button>
             </form>
+
+            {hasSearched && (
+              <div className="mc-hero__results">
+                <div className="mc-hero__results-header">
+                  <h3>Search Results</h3>
+                  <span>{searchResults.length} found</span>
+                </div>
+                {searchError ? (
+                  <div className="mc-hero__results-empty">{searchError}</div>
+                ) : searchResults.length === 0 ? (
+                  <div className="mc-hero__results-empty">
+                    No doctors matched your search. Try adjusting filters.
+                  </div>
+                ) : (
+                  <div className="mc-hero__results-grid">
+                    {searchResults.map((doctor) => (
+                      <article key={doctor.id} className="mc-hero__results-card">
+                        <div className="mc-hero__results-avatar">
+                          {doctor.name.split(' ').slice(0, 2).map((part) => part[0]).join('')}
+                        </div>
+                        <div className="mc-hero__results-info">
+                          <h4>{doctor.name}</h4>
+                          <p>{doctor.specialty}</p>
+                          <span>{doctor.location}</span>
+                        </div>
+                        <div className="mc-hero__results-meta">
+                          <span>Rating: {doctor.rating}</span>
+                          <span>Next: {doctor.nextAvailable}</span>
+                        </div>
+                        <Link to={`/doctors/${doctor.id}`} className="mc-hero__results-link">
+                          View Profile
+                        </Link>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Trust Indicators */}
             <div className="mc-hero__trust-indicators">

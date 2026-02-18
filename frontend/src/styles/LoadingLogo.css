@@ -1,0 +1,125 @@
+:root {
+  --medi-blue: #1A4B84;
+  --medi-teal: #00D1B2;
+  --medi-bg: #ffffff;
+}
+
+.medi-loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--medi-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.medi-loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Logo Animation Core */
+.logo-wrapper {
+  width: 140px;
+  height: 140px;
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.medi-logo-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.medi-path-bg {
+  fill: none;
+  stroke: rgba(26, 75, 132, 0.08);
+  stroke-width: 8;
+  stroke-linejoin: round;
+}
+
+.medi-path-flow {
+  fill: none;
+  stroke: var(--medi-teal);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 50 150;
+  animation: flowOrbit 1.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  filter: drop-shadow(0 0 6px var(--medi-teal));
+}
+
+@keyframes flowOrbit {
+  from { stroke-dashoffset: 200; }
+  to { stroke-dashoffset: 0; }
+}
+
+.medi-node {
+  fill: var(--medi-blue);
+  animation: nodePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes nodePulse {
+  0%, 100% { transform: rotate(45deg) scale(0.8); opacity: 0.6; }
+  50% { transform: rotate(45deg) scale(1.2); opacity: 1; }
+}
+
+/* Typography & Progress Bar */
+.medi-brand-name {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 0.4em;
+  color: var(--medi-blue);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.medi-progress-line {
+  width: 160px;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.medi-progress-fill {
+  width: 30%;
+  height: 100%;
+  background: var(--medi-teal);
+  animation: loadingSlide 1.5s infinite ease-in-out;
+}
+
+@keyframes loadingSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+.medi-status-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8899a6;
+}
+
+/* SUCCESS STATE: THE BLOOM */
+.exit-active {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.logo-wrapper.success {
+  animation: successBloom 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes successBloom {
+  0% { transform: scale(1); filter: brightness(1); }
+  40% { transform: scale(1.2); filter: brightness(1.4) drop-shadow(0 0 20px var(--medi-teal)); }
+  100% { transform: scale(10); opacity: 0; }
+}

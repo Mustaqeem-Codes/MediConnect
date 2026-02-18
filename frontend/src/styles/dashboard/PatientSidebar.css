@@ -1,0 +1,104 @@
+.mc-patient-sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0A192F 0%, #142B4D 100%);
+  color: #F8FAFE;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.mc-patient-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.mc-patient-sidebar__logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #1E88E5;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.mc-patient-sidebar__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.mc-patient-sidebar__subtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: rgba(248, 250, 254, 0.72);
+}
+
+.mc-patient-sidebar__nav {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.mc-patient-sidebar__link {
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  color: rgba(248, 250, 254, 0.85);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.mc-patient-sidebar__link:hover {
+  background: rgba(30, 136, 229, 0.2);
+  color: #F8FAFE;
+}
+
+.mc-patient-sidebar__link.active {
+  background: rgba(30, 136, 229, 0.35);
+  color: #FFFFFF;
+}
+
+.mc-patient-sidebar__footer {
+  margin-top: auto;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+}
+
+.mc-patient-sidebar__footer p {
+  margin: 0 0 0.8rem;
+}
+
+.mc-patient-sidebar__support {
+  width: 100%;
+  border: none;
+  background: #00A896;
+  color: #FFFFFF;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 960px) {
+  .mc-patient-sidebar {
+    width: 100%;
+    min-height: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .mc-patient-sidebar__nav {
+    grid-auto-flow: column;
+    overflow-x: auto;
+  }
+
+  .mc-patient-sidebar__footer {
+    margin-top: 0;
+  }
+}

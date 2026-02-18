@@ -1,136 +1,146 @@
-// frontend/src/components/auth/LoginForm.jsx
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../../styles/auth/LoginForm.css';
 
 const LoginForm = ({ onLoginSuccess }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [role, setRole] = useState('patient');
   const [formData, setFormData] = useState({
-    identifier: '', // email or phone
+    email: '',
+    phone: '',
     password: '',
-    rememberMe: false
   });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Show success message from registration if present
+  const successMessage = location.state?.message;
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.identifier.trim()) {
-      newErrors.identifier = 'Email or phone is required';
-    } else if (
-      !formData.identifier.includes('@') && 
-      !/^\+?[\d\s-]{10,}$/.test(formData.identifier)
-    ) {
-      newErrors.identifier = 'Enter a valid email or phone number';
-    }
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    return newErrors;
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    setError('');
+    setLoading(true);
+
+    // Ensure at least one of email/phone is provided
+    if (!formData.email && !formData.phone) {
+      setError('Please provide either email or phone.');
+      setLoading(false);
+      return;
+    }
+    if (!formData.password) {
+      setError('Password is required.');
+      setLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    // Prepare payload: send only provided identifier
+    const payload = {
+      password: formData.password,
+    };
+    if (formData.email) payload.email = formData.email;
+    if (formData.phone) payload.phone = formData.phone;
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Login data:', formData);
-      // On success, call the parent handler
-      if (onLoginSuccess) onLoginSuccess(formData);
-    } catch (error) {
-      setErrors({ general: 'Invalid credentials. Please try again.' });
+      const endpoint = role === 'doctor' ? 'http://localhost:5000/api/doctors/login' : 'http://localhost:5000/api/patients/login';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Store token and user data
+      localStorage.setItem('token', data.data.token);
+      localStorage.setItem('user', JSON.stringify(data.data)); // includes id, name, email, etc.
+
+      if (onLoginSuccess) {
+        onLoginSuccess(data.data);
+      }
+
+      // Redirect to role dashboard
+      navigate(role === 'doctor' ? '/dashboard/doctor' : '/dashboard/patient');
+    } catch (err) {
+      setError(err.message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
     <div className="login-form-container">
-      <form onSubmit={handleSubmit} className="login-form">
+      <form onSubmit={handleSubmit}>
         <h2 className="login-title">Welcome Back</h2>
-
-        {errors.general && (
-          <div className="login-error-general">{errors.general}</div>
-        )}
-
+        <p className="login-subtitle">Sign in to continue</p>
+        <div className="login-role-switch">
+          <button
+            type="button"
+            className={`login-role-btn ${role === 'patient' ? 'active' : ''}`}
+            onClick={() => setRole('patient')}
+          >
+            Patient
+          </button>
+          <button
+            type="button"
+            className={`login-role-btn ${role === 'doctor' ? 'active' : ''}`}
+            onClick={() => setRole('doctor')}
+          >
+            Doctor
+          </button>
+        </div>
+        {successMessage && <div className="login-success">{successMessage}</div>}
+        {error && <div className="login-error-general">{error}</div>}
         <div className="login-field">
-          <label htmlFor="identifier" className="login-label">
-            Email or Phone
-          </label>
-          <input
-            type="text"
-            id="identifier"
-            name="identifier"
-            value={formData.identifier}
-            onChange={handleChange}
-            placeholder="Enter your email or phone"
-            className={`login-input ${errors.identifier ? 'error' : ''}`}
-          />
-          {errors.identifier && (
-            <span className="login-error">{errors.identifier}</span>
-          )}
+          <label className="login-label" htmlFor="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="Enter your email"
+          className="login-input"
+        />
         </div>
-
         <div className="login-field">
-          <label htmlFor="password" className="login-label">
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Enter your password"
-            className={`login-input ${errors.password ? 'error' : ''}`}
-          />
-          {errors.password && (
-            <span className="login-error">{errors.password}</span>
-          )}
+          <label className="login-label" htmlFor="phone">Phone (optional if email provided)</label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+          placeholder="Enter your phone"
+          className="login-input"
+        />
         </div>
-
-        <div className="login-options">
-          <label className="login-remember">
-            <input
-              type="checkbox"
-              name="rememberMe"
-              checked={formData.rememberMe}
-              onChange={handleChange}
-            />
-            <span>Remember me</span>
-          </label>
-          <Link to="/forgot-password" className="login-forgot">
-            Forgot password?
-          </Link>
+        <div className="login-field">
+          <label className="login-label" htmlFor="password">Password *</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+          className="login-input"
+        />
         </div>
-
-        <button
-          type="submit"
-          className="login-submit"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Signing in...' : 'Sign In'}
+        <button type="submit" className="login-submit" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
         </button>
+        <p className="login-signup">
+          Don't have an account? <a href="/register">Sign up</a>
+        </p>
       </form>
     </div>
   );

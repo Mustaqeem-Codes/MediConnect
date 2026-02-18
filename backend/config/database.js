@@ -64,6 +64,22 @@ const createTables = async () => {
     `);
     console.log('✅ Doctors table ready');
 
+    // Appointments table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS appointments (
+        id SERIAL PRIMARY KEY,
+        patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+        doctor_id INTEGER NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+        appointment_date DATE NOT NULL,
+        appointment_time TIME NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Appointments table ready');
+
     return true;
   } catch (error) {
     console.error('❌ Error creating tables:', error.message);

@@ -1,0 +1,104 @@
+.mc-patient-profile {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  background: #F5F8FB;
+}
+
+.mc-patient-profile__content {
+  padding: 3rem 2.5rem;
+}
+
+.mc-patient-profile__header {
+  margin-bottom: 2rem;
+}
+
+.mc-patient-profile__header h1 {
+  margin: 0 0 0.5rem;
+  color: var(--text, #0A192F);
+  font-size: 2rem;
+}
+
+.mc-patient-profile__header p {
+  margin: 0;
+  color: var(--text-light, #2D3A5E);
+}
+
+.mc-patient-profile__state,
+.mc-patient-profile__error,
+.mc-patient-profile__success {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border, #E1E8F0);
+  margin-bottom: 1.5rem;
+}
+
+.mc-patient-profile__error {
+  border-color: #FECACA;
+  background: #FEF2F2;
+  color: #B91C1C;
+}
+
+.mc-patient-profile__success {
+  border-color: #A7F3D0;
+  background: #ECFDF3;
+  color: #047857;
+}
+
+.mc-patient-profile__form {
+  background: white;
+  padding: 2rem;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(10, 25, 47, 0.08);
+  display: grid;
+  gap: 1.5rem;
+}
+
+.mc-patient-profile__field {
+  display: grid;
+  gap: 0.6rem;
+  font-weight: 600;
+  color: var(--text, #0A192F);
+}
+
+.mc-patient-profile__field input {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border, #E1E8F0);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.mc-patient-profile__field input:focus {
+  outline: none;
+  border-color: var(--primary, #1E88E5);
+  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
+}
+
+.mc-patient-profile__submit {
+  justify-self: flex-start;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary, #1E88E5);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(30, 136, 229, 0.2);
+}
+
+.mc-patient-profile__submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 960px) {
+  .mc-patient-profile {
+    grid-template-columns: 1fr;
+  }
+
+  .mc-patient-profile__content {
+    padding: 2rem 1.5rem;
+  }
+}

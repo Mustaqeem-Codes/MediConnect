@@ -1,8 +1,10 @@
 // frontend/src/components/auth/DoctorRegisterForm.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../../styles/auth/DoctorRegisterForm.css';
 
 const DoctorRegisterForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,7 +42,7 @@ const DoctorRegisterForm = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -48,10 +50,35 @@ const DoctorRegisterForm = () => {
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      console.log('Doctor data:', formData);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/doctors/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          license_number: formData.licenseNumber,
+          specialty: formData.specialty
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      localStorage.setItem('token', data.data.token);
+      localStorage.setItem('user', JSON.stringify(data.data));
+      navigate('/dashboard/doctor');
+    } catch (error) {
+      setErrors({ general: error.message });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const specialties = [
@@ -92,7 +119,7 @@ const DoctorRegisterForm = () => {
 
         <div className="doctor-field">
           <label className="doctor-label">Specialty</label>
-          <select name="specialty" value={formData.specialty} onChange={handleChange} className={`doctor-input ${errors.specialty ? 'error' : ''}`}>
+          <select name="specialty" value={formData.specialty} onChange={handleChange} className={`doctor-select ${errors.specialty ? 'error' : ''}`}>
             <option value="">Select Specialty</option>
             {specialties.map(s => <option key={s} value={s}>{s}</option>)}
           </select>

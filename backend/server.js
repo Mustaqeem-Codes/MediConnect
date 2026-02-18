@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { pool, initDB } = require('./config/database');
+const patientRoutes = require('./routes/patientRoutes');
+const doctorRoutes = require('./routes/doctorRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -13,6 +16,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/patients', patientRoutes);
+app.use('/api/doctors', doctorRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
 // Initialize database connection
 let dbConnected = false;
@@ -62,7 +70,17 @@ app.use((req, res) => {
     message: `Cannot ${req.method} ${req.originalUrl}`,
     availableEndpoints: [
       'GET /',
-      'GET /api/health'
+      'GET /api/health',
+      'POST /api/patients/register',
+      'POST /api/patients/login',
+      'GET /api/patients/profile',
+      'POST /api/doctors/register',
+      'POST /api/doctors/login',
+      'GET /api/doctors/profile',
+      'POST /api/appointments',
+      'GET /api/appointments/patient',
+      'GET /api/appointments/doctor',
+      'PUT /api/appointments/:id/status'
     ]
   });
 });

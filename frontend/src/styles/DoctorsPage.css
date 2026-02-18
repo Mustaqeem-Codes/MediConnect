@@ -1,0 +1,141 @@
+.mc-doctors {
+  min-height: 100vh;
+  background: linear-gradient(180deg, rgba(30, 136, 229, 0.08) 0%, rgba(0, 168, 150, 0.05) 100%);
+  padding: 3rem 1.5rem 4rem;
+  color: var(--text, #0A192F);
+}
+
+.mc-doctors__hero {
+  max-width: 1100px;
+  margin: 0 auto 2.5rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.mc-doctors__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--text-light, #2D3A5E);
+  margin-bottom: 0.5rem;
+}
+
+.mc-doctors__title {
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  margin: 0 0 0.6rem;
+}
+
+.mc-doctors__subtitle {
+  margin: 0;
+  color: var(--text-light, #2D3A5E);
+}
+
+.mc-doctors__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  background: white;
+  padding: 1.2rem;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(10, 25, 47, 0.08);
+}
+
+.mc-doctors__input,
+.mc-doctors__select {
+  border: 1px solid var(--border, #E1E8F0);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.95rem;
+}
+
+.mc-doctors__cta {
+  border: none;
+  background: var(--primary, #1E88E5);
+  color: white;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mc-doctors__grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.mc-doctors__state,
+.mc-doctors__error,
+.mc-doctors__empty {
+  max-width: 1100px;
+  margin: 0 auto 1.5rem;
+  background: white;
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  border: 1px solid var(--border, #E1E8F0);
+}
+
+.mc-doctors__error {
+  border-color: #FECACA;
+  background: #FEF2F2;
+  color: #B91C1C;
+}
+
+.mc-doctors__card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 18px;
+  border: 1px solid rgba(225, 232, 240, 0.8);
+  box-shadow: 0 12px 30px rgba(10, 25, 47, 0.08);
+  display: grid;
+  gap: 1rem;
+}
+
+.mc-doctors__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(30, 136, 229, 0.15);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.mc-doctors__info h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1.2rem;
+}
+
+.mc-doctors__info p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.mc-doctors__info span {
+  color: var(--text-light, #2D3A5E);
+  font-size: 0.9rem;
+}
+
+.mc-doctors__meta {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--text-light, #2D3A5E);
+  font-size: 0.9rem;
+}
+
+.mc-doctors__book {
+  border: none;
+  background: var(--primary, #1E88E5);
+  color: white;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .mc-doctors__hero {
+    text-align: left;
+  }
+}

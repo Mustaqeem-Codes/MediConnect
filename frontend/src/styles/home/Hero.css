@@ -225,6 +225,114 @@
   transform: translateX(4px);
 }
 
+/* Search Results */
+.mc-hero__results {
+  margin-top: 1.5rem;
+  background: var(--mc-background);
+  border: 1px solid var(--mc-border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: var(--mc-shadow-lg);
+}
+
+.mc-hero__results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.mc-hero__results-header h3 {
+  margin: 0;
+  color: var(--mc-text);
+}
+
+.mc-hero__results-header span {
+  color: var(--mc-text-light);
+  font-size: 0.9rem;
+}
+
+.mc-hero__results-empty {
+  background: var(--mc-background-alt);
+  border-radius: 12px;
+  padding: 1rem;
+  color: var(--mc-text-light);
+  font-weight: 500;
+}
+
+.mc-hero__results-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.mc-hero__results-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--mc-border);
+}
+
+.mc-hero__results-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--mc-primary-light);
+  color: var(--mc-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.mc-hero__results-info h4 {
+  margin: 0 0 0.2rem;
+  color: var(--mc-text);
+}
+
+.mc-hero__results-info p {
+  margin: 0;
+  font-weight: 600;
+  color: var(--mc-text);
+}
+
+.mc-hero__results-info span {
+  color: var(--mc-text-light);
+  font-size: 0.9rem;
+}
+
+.mc-hero__results-meta {
+  display: grid;
+  gap: 0.2rem;
+  text-align: right;
+  color: var(--mc-text-light);
+  font-size: 0.85rem;
+}
+
+.mc-hero__results-link {
+  grid-column: 1 / -1;
+  justify-self: start;
+  background: var(--mc-primary);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .mc-hero__results-card {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .mc-hero__results-meta {
+    text-align: left;
+  }
+}
+
 /* Trust Indicators */
 .mc-hero__trust-indicators {
   display: flex;
