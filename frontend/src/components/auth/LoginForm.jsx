@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../../styles/auth/LoginForm.css';
 import { API_BASE_URL } from '../../config/api';
 
@@ -35,8 +35,14 @@ const LoginForm = ({ onLoginSuccess }) => {
     setError('');
     setLoading(true);
 
-    // Ensure at least one of email/phone is provided
-    if (!formData.email && !formData.phone) {
+    // Ensure required identifiers by role
+    if (role === 'admin' && !formData.email) {
+      setError('Admin login requires email.');
+      setLoading(false);
+      return;
+    }
+
+    if (role !== 'admin' && !formData.email && !formData.phone) {
       setError('Please provide either email or phone.');
       setLoading(false);
       return;
@@ -52,7 +58,7 @@ const LoginForm = ({ onLoginSuccess }) => {
       password: formData.password,
     };
     if (formData.email) payload.email = formData.email;
-    if (formData.phone) payload.phone = formData.phone;
+    if (role !== 'admin' && formData.phone) payload.phone = formData.phone;
 
     try {
       const endpoint = role === 'doctor'
@@ -147,6 +153,7 @@ const LoginForm = ({ onLoginSuccess }) => {
           autoComplete="tel"
           placeholder="Enter your phone"
           className="login-input"
+          disabled={role === 'admin'}
         />
         </div>
         <div className="login-field">
@@ -168,7 +175,11 @@ const LoginForm = ({ onLoginSuccess }) => {
         {successMessage && <div className="login-success">{successMessage}</div>}
         {error && <div className="login-error-general">{error}</div>}
         <p className="login-signup">
-          Don't have an account? <a href="/register">Sign up</a>
+          Don't have an account?{' '}
+          <Link to={`/register?role=${role === 'admin' ? 'patient' : role}`}>Sign up</Link>
+        </p>
+        <p className="login-admin-hint">
+          Admin access: <Link to="/login?role=admin">Open Admin Login</Link>
         </p>
       </form>
     </div>

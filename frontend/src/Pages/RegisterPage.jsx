@@ -63,12 +63,14 @@ const RegisterPage = () => {
           {/* Role Selector */}
           <div className="role-selector">
             <button
+              type="button"
               className={`role-btn ${role === 'patient' ? 'active' : ''}`}
               onClick={() => handleRoleChange('patient')}
             >
               👤 Patient
             </button>
             <button
+              type="button"
               className={`role-btn ${role === 'doctor' ? 'active' : ''}`}
               onClick={() => handleRoleChange('doctor')}
             >
@@ -84,7 +86,7 @@ const RegisterPage = () => {
           )}
 
           <SocialLoginButtons />
-          <LoginPrompt />
+          <LoginPrompt role={role} />
         </div>
       </div>
     </div>

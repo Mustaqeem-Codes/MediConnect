@@ -21,6 +21,7 @@
 
 .login-role-switch {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   background: var(--background-alt, #F8FAFE);
   padding: 0.4rem;
@@ -30,7 +31,8 @@
 }
 
 .login-role-btn {
-  flex: 1;
+  flex: 1 1 120px;
+  min-width: 0;
   border: none;
   background: transparent;
   padding: 0.6rem 0.8rem;
@@ -180,6 +182,23 @@
 }
 
 .login-signup a:hover {
+  text-decoration: underline;
+}
+
+.login-admin-hint {
+  margin-top: 0.65rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-light, #2D3A5E);
+}
+
+.login-admin-hint a {
+  color: var(--primary, #1E88E5);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-admin-hint a:hover {
   text-decoration: underline;
 }
 

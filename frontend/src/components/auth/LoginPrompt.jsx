@@ -3,12 +3,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/auth/LoginPrompt.css';
 
-const LoginPrompt = () => {
+const LoginPrompt = ({ role = 'patient' }) => {
   return (
     <div className="login-prompt">
       <p className="login-prompt-text">
         Already have an account?{' '}
-        <Link to="/login" className="login-prompt-link">
+        <Link to={`/login?role=${role}`} className="login-prompt-link">
           Sign in
         </Link>
       </p>
