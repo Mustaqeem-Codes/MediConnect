@@ -116,19 +116,19 @@ const DoctorRegisterForm = () => {
         <h2 className="doctor-form-title">Create Doctor Account</h2>
         <div className="doctor-field">
           <label className="doctor-label">Full Name</label>
-          <input type="text" name="name" value={formData.name} onChange={handleChange} className={`doctor-input ${errors.name ? 'error' : ''}`} placeholder="Dr. John Doe" />
+          <input type="text" name="name" value={formData.name} onChange={handleChange} autoComplete="name" className={`doctor-input ${errors.name ? 'error' : ''}`} placeholder="Dr. John Doe" />
           {errors.name && <span className="doctor-error">{errors.name}</span>}
         </div>
 
         <div className="doctor-field">
           <label className="doctor-label">Email</label>
-          <input type="email" name="email" value={formData.email} onChange={handleChange} className={`doctor-input ${errors.email ? 'error' : ''}`} placeholder="doctor@example.com" />
+          <input type="email" name="email" value={formData.email} onChange={handleChange} autoComplete="email" className={`doctor-input ${errors.email ? 'error' : ''}`} placeholder="doctor@example.com" />
           {errors.email && <span className="doctor-error">{errors.email}</span>}
         </div>
 
         <div className="doctor-field">
           <label className="doctor-label">Phone Number</label>
-          <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className={`doctor-input ${errors.phone ? 'error' : ''}`} placeholder="+1 234 567 890" />
+          <input type="tel" name="phone" value={formData.phone} onChange={handleChange} autoComplete="tel" className={`doctor-input ${errors.phone ? 'error' : ''}`} placeholder="+1 234 567 890" />
           {errors.phone && <span className="doctor-error">{errors.phone}</span>}
         </div>
 
@@ -175,13 +175,13 @@ const DoctorRegisterForm = () => {
 
         <div className="doctor-field">
           <label className="doctor-label">Clinic Location</label>
-          <input type="text" name="locationLine" value={formData.locationLine} onChange={handleChange} className={`doctor-input ${errors.locationLine ? 'error' : ''}`} placeholder="Street address or area" />
+          <input type="text" name="locationLine" value={formData.locationLine} onChange={handleChange} autoComplete="street-address" className={`doctor-input ${errors.locationLine ? 'error' : ''}`} placeholder="Street address or area" />
           {errors.locationLine && <span className="doctor-error">{errors.locationLine}</span>}
         </div>
 
         <div className="doctor-field">
           <label className="doctor-label">Medical License Number</label>
-          <input type="text" name="licenseNumber" value={formData.licenseNumber} onChange={handleChange} className={`doctor-input ${errors.licenseNumber ? 'error' : ''}`} placeholder="License #" />
+          <input type="text" name="licenseNumber" value={formData.licenseNumber} onChange={handleChange} autoComplete="off" className={`doctor-input ${errors.licenseNumber ? 'error' : ''}`} placeholder="License #" />
           {errors.licenseNumber && <span className="doctor-error">{errors.licenseNumber}</span>}
         </div>
 
@@ -196,13 +196,13 @@ const DoctorRegisterForm = () => {
 
         <div className="doctor-field">
           <label className="doctor-label">Password</label>
-          <input type="password" name="password" value={formData.password} onChange={handleChange} className={`doctor-input ${errors.password ? 'error' : ''}`} placeholder="••••••••" />
+          <input type="password" name="password" value={formData.password} onChange={handleChange} autoComplete="new-password" className={`doctor-input ${errors.password ? 'error' : ''}`} placeholder="••••••••" />
           {errors.password && <span className="doctor-error">{errors.password}</span>}
         </div>
 
         <div className="doctor-field">
           <label className="doctor-label">Confirm Password</label>
-          <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className={`doctor-input ${errors.confirmPassword ? 'error' : ''}`} placeholder="••••••••" />
+          <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} autoComplete="new-password" className={`doctor-input ${errors.confirmPassword ? 'error' : ''}`} placeholder="••••••••" />
           {errors.confirmPassword && <span className="doctor-error">{errors.confirmPassword}</span>}
         </div>
 

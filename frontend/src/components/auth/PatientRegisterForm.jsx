@@ -90,6 +90,7 @@ const PatientRegisterForm = () => {
           name="name"
           value={formData.name}
           onChange={handleChange}
+          autoComplete="name"
           required
           className="patient-input"
         />
@@ -102,6 +103,7 @@ const PatientRegisterForm = () => {
           name="email"
           value={formData.email}
           onChange={handleChange}
+          autoComplete="email"
           required
           className="patient-input"
         />
@@ -114,6 +116,7 @@ const PatientRegisterForm = () => {
           name="phone"
           value={formData.phone}
           onChange={handleChange}
+          autoComplete="tel"
           required
           className="patient-input"
         />
@@ -164,6 +167,7 @@ const PatientRegisterForm = () => {
           name="locationLine"
           value={formData.locationLine}
           onChange={handleChange}
+          autoComplete="street-address"
           required
           className="patient-input"
         />
@@ -176,6 +180,7 @@ const PatientRegisterForm = () => {
           name="password"
           value={formData.password}
           onChange={handleChange}
+          autoComplete="new-password"
           required
           minLength="6"
           className="patient-input"

@@ -76,7 +76,9 @@ const PatientProfilePage = () => {
         setFormData({
           name: data.data.name || '',
           phone: data.data.phone || '',
-          date_of_birth: data.data.date_of_birth || '',
+          date_of_birth: data.data.date_of_birth
+            ? String(data.data.date_of_birth).slice(0, 10)
+            : '',
           ...parseLocation(data.data.location)
         });
       } catch (err) {
