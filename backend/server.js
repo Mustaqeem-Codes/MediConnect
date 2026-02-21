@@ -19,10 +19,12 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const isLocalDevOrigin = (origin) => /^(http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)$/i.test(origin);
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || isLocalDevOrigin(origin) || allowedOrigins.includes(origin)) {
         callback(null, true);
         return;
       }
