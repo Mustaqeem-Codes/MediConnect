@@ -83,6 +83,7 @@ const registerDoctor = async (req, res) => {
         location: doctor.location,
         is_verified: doctor.is_verified,
         is_approved: doctor.is_approved,
+        is_blocked: doctor.is_blocked,
         role: 'doctor',
         token
       }
@@ -124,6 +125,13 @@ const loginDoctor = async (req, res) => {
       });
     }
 
+    if (doctor.is_blocked) {
+      return res.status(403).json({
+        success: false,
+        error: 'Your account is blocked'
+      });
+    }
+
     const isMatch = await Doctor.verifyPassword(password, doctor.password_hash);
     if (!isMatch) {
       return res.status(401).json({
@@ -146,6 +154,7 @@ const loginDoctor = async (req, res) => {
         location: doctor.location,
         is_verified: doctor.is_verified,
         is_approved: doctor.is_approved,
+        is_blocked: doctor.is_blocked,
         role: 'doctor',
         token
       }

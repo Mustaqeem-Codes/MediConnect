@@ -21,7 +21,7 @@ const LoginForm = ({ onLoginSuccess }) => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const roleParam = params.get('role');
-    if (roleParam === 'patient' || roleParam === 'doctor') {
+    if (roleParam === 'patient' || roleParam === 'doctor' || roleParam === 'admin') {
       setRole(roleParam);
     }
   }, [location.search]);
@@ -55,7 +55,11 @@ const LoginForm = ({ onLoginSuccess }) => {
     if (formData.phone) payload.phone = formData.phone;
 
     try {
-      const endpoint = role === 'doctor' ? `${API_BASE_URL}/api/doctors/login` : `${API_BASE_URL}/api/patients/login`;
+      const endpoint = role === 'doctor'
+        ? `${API_BASE_URL}/api/doctors/login`
+        : role === 'admin'
+          ? `${API_BASE_URL}/api/admin/login`
+          : `${API_BASE_URL}/api/patients/login`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -77,7 +81,13 @@ const LoginForm = ({ onLoginSuccess }) => {
       }
 
       // Redirect to role dashboard
-      navigate(role === 'doctor' ? '/dashboard/doctor' : '/dashboard/patient');
+      navigate(
+        role === 'doctor'
+          ? '/dashboard/doctor'
+          : role === 'admin'
+            ? '/dashboard/admin'
+            : '/dashboard/patient'
+      );
     } catch (err) {
       setError(err.message);
     } finally {
@@ -105,6 +115,13 @@ const LoginForm = ({ onLoginSuccess }) => {
           >
             Doctor
           </button>
+          <button
+            type="button"
+            className={`login-role-btn ${role === 'admin' ? 'active' : ''}`}
+            onClick={() => setRole('admin')}
+          >
+            Admin
+          </button>
         </div>
         <div className="login-field">
           <label className="login-label" htmlFor="email">Email</label>
@@ -114,6 +131,7 @@ const LoginForm = ({ onLoginSuccess }) => {
           name="email"
           value={formData.email}
           onChange={handleChange}
+          autoComplete="email"
           placeholder="Enter your email"
           className="login-input"
         />
@@ -126,6 +144,7 @@ const LoginForm = ({ onLoginSuccess }) => {
           name="phone"
           value={formData.phone}
           onChange={handleChange}
+          autoComplete="tel"
           placeholder="Enter your phone"
           className="login-input"
         />
@@ -138,6 +157,7 @@ const LoginForm = ({ onLoginSuccess }) => {
           name="password"
           value={formData.password}
           onChange={handleChange}
+          autoComplete="current-password"
           required
           className="login-input"
         />

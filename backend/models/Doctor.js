@@ -14,7 +14,7 @@ class Doctor {
     const query = `
       INSERT INTO doctors (name, email, phone, password_hash, license_number, specialty, location)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, name, email, phone, license_number, specialty, location, is_verified, is_approved, created_at
+      RETURNING id, name, email, phone, license_number, specialty, location, is_verified, is_approved, is_blocked, created_at
     `;
     const values = [name, email, phone, password_hash, license_number, specialty, location || null];
 
@@ -58,7 +58,7 @@ class Doctor {
 
   // Find doctor by ID
   static async findById(id) {
-    const query = 'SELECT id, name, email, phone, license_number, specialty, location, is_verified, is_approved, created_at FROM doctors WHERE id = $1';
+    const query = 'SELECT id, name, email, phone, license_number, specialty, location, is_verified, is_approved, is_blocked, created_at FROM doctors WHERE id = $1';
     const result = await pool.query(query, [id]);
     return result.rows[0];
   }
@@ -66,7 +66,7 @@ class Doctor {
   // List all doctors (public fields)
   static async findAll() {
     const query = `
-      SELECT id, name, specialty, location, is_verified, is_approved
+      SELECT id, name, specialty, location, is_verified, is_approved, is_blocked
       FROM doctors
       ORDER BY created_at DESC
     `;

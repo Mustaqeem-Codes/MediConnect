@@ -10,6 +10,7 @@ import DoctorDashboardPage from './Pages/DoctorDashboardPage';
 import DoctorAppointmentsPage from './Pages/DoctorAppointmentsPage';
 import DoctorPatientsPage from './Pages/DoctorPatientsPage';
 import DoctorMessagesPage from './Pages/DoctorMessagesPage';
+import AdminDashboardPage from './Pages/AdminDashboardPage';
 import DoctorsPage from './Pages/DoctorsPage';
 import DoctorDetailPage from './Pages/DoctorDetailPage';
 import BookingPage from './Pages/BookingPage';
@@ -58,6 +59,14 @@ function App() {
           }
         />
         {/* Placeholder for doctor dashboard */}
+        <Route
+          path="/dashboard/admin"
+          element={
+            <PrivateRoute requiredRole="admin">
+              <AdminDashboardPage />
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/dashboard/doctor"
           element={

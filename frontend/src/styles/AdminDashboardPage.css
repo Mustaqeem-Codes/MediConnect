@@ -1,0 +1,136 @@
+.mc-admin {
+  padding: 2rem;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.mc-admin__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mc-admin__eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.mc-admin__header h1 {
+  margin: 0.25rem 0;
+}
+
+.mc-admin__header p {
+  margin: 0;
+  color: #475569;
+}
+
+.mc-admin__logout {
+  border: none;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+}
+
+.mc-admin__state,
+.mc-admin__error {
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+}
+
+.mc-admin__state {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.mc-admin__error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.mc-admin__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mc-admin__stat {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.mc-admin__stat h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.mc-admin__stat p {
+  margin: 0.4rem 0 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.mc-admin__panel {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mc-admin__panel h2 {
+  margin: 0 0 1rem;
+}
+
+.mc-admin__table-wrap {
+  overflow-x: auto;
+}
+
+.mc-admin__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mc-admin__table th,
+.mc-admin__table td {
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  padding: 0.7rem 0.5rem;
+  vertical-align: top;
+}
+
+.mc-admin__table th {
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.mc-admin__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mc-admin__table button {
+  border: none;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #fff;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+.mc-admin__table button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

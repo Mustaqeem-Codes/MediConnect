@@ -52,6 +52,7 @@ const createTables = async () => {
         location TEXT,
         date_of_birth DATE,
         is_verified BOOLEAN DEFAULT FALSE,
+        is_blocked BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -59,6 +60,7 @@ const createTables = async () => {
     console.log('✅ Patients table ready');
 
     await pool.query('ALTER TABLE patients ADD COLUMN IF NOT EXISTS location TEXT');
+  await pool.query('ALTER TABLE patients ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT FALSE');
 
     // Doctors table
     await pool.query(`
@@ -73,6 +75,7 @@ const createTables = async () => {
         location TEXT,
         is_verified BOOLEAN DEFAULT FALSE,
         is_approved BOOLEAN DEFAULT FALSE,
+        is_blocked BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -80,6 +83,7 @@ const createTables = async () => {
     console.log('✅ Doctors table ready');
 
     await pool.query('ALTER TABLE doctors ADD COLUMN IF NOT EXISTS location TEXT');
+  await pool.query('ALTER TABLE doctors ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT FALSE');
 
     // Appointments table
     await pool.query(`

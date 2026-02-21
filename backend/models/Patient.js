@@ -14,7 +14,7 @@ class Patient {
     const query = `
       INSERT INTO patients (name, email, phone, password_hash, date_of_birth, location)
       VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, name, email, phone, date_of_birth, location, is_verified, created_at
+      RETURNING id, name, email, phone, date_of_birth, location, is_verified, is_blocked, created_at
     `;
     const values = [name, email, phone, password_hash, date_of_birth || null, location || null];
 
@@ -50,7 +50,7 @@ class Patient {
 
   // Find patient by ID
   static async findById(id) {
-    const query = 'SELECT id, name, email, phone, date_of_birth, location, is_verified, created_at FROM patients WHERE id = $1';
+    const query = 'SELECT id, name, email, phone, date_of_birth, location, is_verified, is_blocked, created_at FROM patients WHERE id = $1';
     const result = await pool.query(query, [id]);
     return result.rows[0];
   }
@@ -66,7 +66,7 @@ class Patient {
           location = $4,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $5
-      RETURNING id, name, email, phone, date_of_birth, location, is_verified, created_at, updated_at
+      RETURNING id, name, email, phone, date_of_birth, location, is_verified, is_blocked, created_at, updated_at
     `;
     const values = [name, phone, date_of_birth || null, location || null, id];
 

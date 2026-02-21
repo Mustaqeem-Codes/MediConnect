@@ -64,6 +64,7 @@ const registerPatient = async (req, res) => {
         date_of_birth: patient.date_of_birth,
         location: patient.location,
         is_verified: patient.is_verified,
+        is_blocked: patient.is_blocked,
         role: 'patient',
         token
       }
@@ -108,6 +109,13 @@ const loginPatient = async (req, res) => {
       });
     }
 
+    if (patient.is_blocked) {
+      return res.status(403).json({
+        success: false,
+        error: 'Your account is blocked'
+      });
+    }
+
     // Verify password
     const isMatch = await Patient.verifyPassword(password, patient.password_hash);
     if (!isMatch) {
@@ -130,6 +138,7 @@ const loginPatient = async (req, res) => {
         date_of_birth: patient.date_of_birth,
         location: patient.location,
         is_verified: patient.is_verified,
+        is_blocked: patient.is_blocked,
         role: 'patient',
         token
       }
