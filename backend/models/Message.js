@@ -33,6 +33,16 @@ class Message {
     const result = await pool.query(query, [appointment_id]);
     return result.rows[0]?.count || 0;
   }
+
+  static async countPatientMessagesByAppointment(appointment_id) {
+    const query = `
+      SELECT COUNT(*)::int AS count
+      FROM messages
+      WHERE appointment_id = $1 AND sender_role = 'patient'
+    `;
+    const result = await pool.query(query, [appointment_id]);
+    return result.rows[0]?.count || 0;
+  }
 }
 
 module.exports = Message;

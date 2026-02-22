@@ -66,6 +66,7 @@ const DoctorAppointmentsPage = () => {
           consultationType: item.consultation_type || 'physical_checkup',
           appointmentType: item.appointment_type || item.consultation_type || 'physical_checkup',
           durationUnits: item.duration_units,
+          videoRoomId: item.video_room_id,
           reportSubmittedAt: item.report_submitted_at,
           interactionClosedAt: item.interaction_closed_at,
           treatmentSummary: item.treatment_summary,
@@ -123,7 +124,9 @@ const DoctorAppointmentsPage = () => {
 
       setAppointments((prev) =>
         prev.map((item) =>
-          item.id === appointmentId ? { ...item, status: data.data.status } : item
+          item.id === appointmentId
+            ? { ...item, status: data.data.status, videoRoomId: data.data.video_room_id ?? item.videoRoomId }
+            : item
         )
       );
     } catch (err) {
@@ -372,6 +375,15 @@ const DoctorAppointmentsPage = () => {
                     <span className={`mc-doctor-appointments__status mc-doctor-appointments__status--${item.status}`}>
                       {item.status}
                     </span>
+                    {item.status === 'confirmed' && item.consultationType === 'video_consultation' && item.videoRoomId && (
+                      <button
+                        type="button"
+                        className="mc-doctor-appointments__btn mc-doctor-appointments__btn--message"
+                        onClick={() => window.open(`https://meet.jit.si/${encodeURIComponent(item.videoRoomId)}`, '_blank', 'noopener,noreferrer')}
+                      >
+                        Join Video Call
+                      </button>
+                    )}
                     {item.status === 'pending' && (
                       <div className="mc-doctor-appointments__buttons">
                         <button

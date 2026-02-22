@@ -59,6 +59,8 @@ const PatientAppointmentsPage = () => {
           date: formatDate(item.appointment_date),
           time: formatTime(item.appointment_time),
           status: item.status || 'pending',
+          consultationType: item.consultation_type || 'physical_checkup',
+          videoRoomId: item.video_room_id,
           reportSubmittedAt: item.report_submitted_at,
           interactionClosedAt: item.interaction_closed_at,
           treatmentSummary: item.treatment_summary,
@@ -184,6 +186,15 @@ const PatientAppointmentsPage = () => {
                       <span className={`mc-patient-appointments__status mc-patient-appointments__status--${item.status}`}>
                         {item.status}
                       </span>
+                      {item.status === 'confirmed' && item.consultationType === 'video_consultation' && item.videoRoomId && (
+                        <button
+                          type="button"
+                          className="mc-patient-appointments__message"
+                          onClick={() => window.open(`https://meet.jit.si/${encodeURIComponent(item.videoRoomId)}`, '_blank', 'noopener,noreferrer')}
+                        >
+                          Join Video Call
+                        </button>
+                      )}
                       {!item.interactionClosedAt && (
                         <button
                           type="button"

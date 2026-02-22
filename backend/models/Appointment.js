@@ -25,7 +25,7 @@ class Appointment {
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
-                consultation_type, appointment_type, duration_units,
+                consultation_type, appointment_type, duration_units, video_room_id,
                 status, reason, report_due_at, report_submitted_at, interaction_closed_at, created_at
     `;
     const values = [
@@ -45,7 +45,7 @@ class Appointment {
   static async findByPatientId(patient_id) {
     const query = `
       SELECT a.id, a.global_sequence_id, a.patient_id, a.doctor_id, a.appointment_date, a.appointment_time,
-              a.consultation_type, a.appointment_type, a.duration_units, a.status, a.reason,
+              a.consultation_type, a.appointment_type, a.duration_units, a.video_room_id, a.status, a.reason,
               a.treatment_summary, a.medical_report, a.medicines, a.prescriptions, a.recommendations,
               a.report_due_at, a.report_submitted_at, a.reminder_sent_at, a.interaction_closed_at,
              a.created_at,
@@ -68,7 +68,7 @@ class Appointment {
   static async findByDoctorId(doctor_id) {
     const query = `
       SELECT a.id, a.global_sequence_id, a.patient_id, a.doctor_id, a.appointment_date, a.appointment_time,
-              a.consultation_type, a.appointment_type, a.duration_units, a.status, a.reason,
+              a.consultation_type, a.appointment_type, a.duration_units, a.video_room_id, a.status, a.reason,
               a.treatment_summary, a.medical_report, a.medicines, a.prescriptions, a.recommendations,
               a.report_due_at, a.report_submitted_at, a.reminder_sent_at, a.interaction_closed_at,
               a.created_at,
@@ -107,7 +107,7 @@ class Appointment {
   static async findById(id) {
     const query = `
       SELECT id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
-              consultation_type, appointment_type, duration_units, status, reason,
+              consultation_type, appointment_type, duration_units, video_room_id, status, reason,
               treatment_summary, medical_report, medicines, prescriptions, recommendations,
               report_due_at, report_submitted_at, reminder_sent_at, interaction_closed_at,
               created_at, updated_at
@@ -190,6 +190,13 @@ class Appointment {
     const query = `
       UPDATE appointments
       SET status = $1,
+          video_room_id = CASE
+            WHEN $1 = 'confirmed'
+              AND consultation_type = 'video_consultation'
+              AND (video_room_id IS NULL OR video_room_id = '')
+            THEN CONCAT('mc-', id::text, '-', SUBSTR(MD5(RANDOM()::text), 1, 10))
+            ELSE video_room_id
+          END,
           report_due_at = CASE
             WHEN $1 = 'completed' AND report_due_at IS NULL
             THEN (appointment_date::timestamp + appointment_time + INTERVAL '24 hours')
@@ -198,7 +205,7 @@ class Appointment {
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $2 AND doctor_id = $3
       RETURNING id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
-                consultation_type, appointment_type, duration_units,
+                consultation_type, appointment_type, duration_units, video_room_id,
                 status, reason, report_due_at, report_submitted_at,
                 reminder_sent_at, interaction_closed_at, updated_at
     `;
@@ -228,7 +235,7 @@ class Appointment {
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $6 AND doctor_id = $7
       RETURNING id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
-                consultation_type, appointment_type, duration_units,
+                consultation_type, appointment_type, duration_units, video_room_id,
                 status, reason,
                 treatment_summary, medical_report, medicines, prescriptions, recommendations,
                 report_due_at, report_submitted_at, reminder_sent_at, interaction_closed_at, updated_at

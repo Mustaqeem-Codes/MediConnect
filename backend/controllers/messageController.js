@@ -67,16 +67,16 @@ const sendAppointmentMessage = async (req, res) => {
       });
     }
 
-    if (req.user.role === 'doctor') {
-      const allowedStatuses = ['pending', 'confirmed', 'rejected', 'completed'];
-      if (!allowedStatuses.includes(appointment.status)) {
-        return res.status(403).json({
-          success: false,
-          error: 'Messages are only available for active appointments'
-        });
-      }
+    const allowedStatuses = ['pending', 'confirmed', 'rejected', 'completed'];
+    if (!allowedStatuses.includes(appointment.status)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Messages are only available for active appointments'
+      });
+    }
 
-      if (appointment.status === 'rejected') {
+    if (appointment.status === 'rejected') {
+      if (req.user.role === 'doctor') {
         const doctorMessageCount = await Message.countDoctorMessagesByAppointment(appointmentId);
         if (doctorMessageCount > 0) {
           return res.status(403).json({
@@ -88,6 +88,16 @@ const sendAppointmentMessage = async (req, res) => {
           return res.status(400).json({
             success: false,
             error: 'Please provide a clear reason for the rejection (min 10 characters)'
+          });
+        }
+      }
+
+      if (req.user.role === 'patient') {
+        const patientMessageCount = await Message.countPatientMessagesByAppointment(appointmentId);
+        if (patientMessageCount > 0) {
+          return res.status(403).json({
+            success: false,
+            error: 'Only one message is allowed for rejected appointments'
           });
         }
       }

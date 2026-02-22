@@ -102,6 +102,7 @@ const createTables = async () => {
         consultation_type VARCHAR(40) DEFAULT 'physical_checkup',
         appointment_type VARCHAR(40) DEFAULT NULL,
         duration_units INTEGER NOT NULL DEFAULT 2,
+        video_room_id TEXT,
         status VARCHAR(20) DEFAULT 'pending',
         reason TEXT,
         treatment_summary TEXT,
@@ -140,6 +141,7 @@ const createTables = async () => {
     await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS medicines JSONB DEFAULT '[]'::jsonb");
     await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS prescriptions TEXT');
     await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS recommendations TEXT');
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS video_room_id TEXT');
     await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS report_due_at TIMESTAMP');
     await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS report_submitted_at TIMESTAMP');
     await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMP');

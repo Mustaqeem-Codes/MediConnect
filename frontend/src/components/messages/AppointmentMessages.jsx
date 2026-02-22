@@ -17,14 +17,25 @@ const AppointmentMessages = ({ appointmentId, appointmentStatus, interactionClos
   const [error, setError] = useState('');
 
   const isRejected = appointmentStatus === 'rejected';
-  const canSend = !interactionClosed && (role === 'patient' || appointmentStatus === 'pending' || appointmentStatus === 'confirmed' || appointmentStatus === 'rejected' || appointmentStatus === 'completed');
+  const roleMessageCount = useMemo(
+    () => messages.filter((item) => item.sender_role === role).length,
+    [messages, role]
+  );
+  const hasReachedRejectedLimit = isRejected && roleMessageCount >= 1;
+  const canSend =
+    !interactionClosed &&
+    (appointmentStatus === 'pending' ||
+      appointmentStatus === 'confirmed' ||
+      appointmentStatus === 'rejected' ||
+      appointmentStatus === 'completed') &&
+    !hasReachedRejectedLimit;
 
   const helpText = useMemo(() => {
-    if (role === 'doctor' && isRejected) {
-      return 'You can send one message to explain the rejection.';
-    }
     if (interactionClosed) {
       return 'Conversation is closed after the doctor submitted the final report.';
+    }
+    if (isRejected) {
+      return 'Rejected appointment: only one message is allowed per person.';
     }
     if (role === 'doctor') {
       return 'Messages are available for pending and confirmed requests.';
