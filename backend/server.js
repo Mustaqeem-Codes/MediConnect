@@ -24,10 +24,32 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
 
 const isLocalDevOrigin = (origin) => /^(http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)$/i.test(origin);
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const originMatchesPattern = (origin, pattern) => {
+  if (!pattern) return false;
+  if (pattern === origin) return true;
+  if (!pattern.includes('*')) return false;
+
+  const regexSource = `^${pattern.split('*').map(escapeRegex).join('.*')}$`;
+  try {
+    const regex = new RegExp(regexSource, 'i');
+    return regex.test(origin);
+  } catch {
+    return false;
+  }
+};
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (isLocalDevOrigin(origin)) return true;
+  return allowedOrigins.some((pattern) => originMatchesPattern(origin, pattern));
+};
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || isLocalDevOrigin(origin) || allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }
