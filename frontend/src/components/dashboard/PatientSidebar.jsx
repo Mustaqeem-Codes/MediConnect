@@ -1,8 +1,35 @@
+import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import '../../styles/dashboard/PatientSidebar.css';
+import { API_BASE_URL } from '../../config/api';
 
 const PatientSidebar = () => {
   const navigate = useNavigate();
+  const [pendingRecordRequests, setPendingRecordRequests] = useState(0);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const loadPendingRequests = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/patients/record-access-requests`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          setPendingRecordRequests(0);
+          return;
+        }
+        const count = Array.isArray(data.data) ? data.data.length : 0;
+        setPendingRecordRequests(count);
+      } catch {
+        setPendingRecordRequests(0);
+      }
+    };
+
+    loadPendingRequests();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -27,6 +54,11 @@ const PatientSidebar = () => {
         <NavLink to="/dashboard/patient/profile" className="mc-patient-sidebar__link">
           Profile & Settings
         </NavLink>
+        {pendingRecordRequests > 0 && (
+          <NavLink to="/dashboard/patient/profile" className="mc-patient-sidebar__link">
+            Record Requests ({pendingRecordRequests})
+          </NavLink>
+        )}
         <NavLink to="/dashboard/patient/appointments" className="mc-patient-sidebar__link">
           Appointments
         </NavLink>

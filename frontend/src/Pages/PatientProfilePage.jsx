@@ -20,7 +20,6 @@ const PatientProfilePage = () => {
   const [success, setSuccess] = useState('');
   const [recordAccessRequests, setRecordAccessRequests] = useState([]);
   const [processingRequestId, setProcessingRequestId] = useState(null);
-  const [submittingSoftwareReview, setSubmittingSoftwareReview] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -188,49 +187,6 @@ const PatientProfilePage = () => {
     }
   };
 
-  const handleSoftwareReview = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login?role=patient');
-      return;
-    }
-
-    const ratingInput = window.prompt('Rate this software from 1 to 5:');
-    if (!ratingInput) return;
-    const rating = Number.parseInt(ratingInput, 10);
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      setError('Software rating must be between 1 and 5.');
-      return;
-    }
-
-    const reviewText = window.prompt('Share software feedback (optional):', '') || '';
-
-    setSubmittingSoftwareReview(true);
-    setError('');
-    setSuccess('');
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/reviews/software`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ rating, review_text: reviewText })
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit software review');
-      }
-
-      setSuccess('Thanks! Your software review has been submitted.');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmittingSoftwareReview(false);
-    }
-  };
-
   return (
     <div className="mc-patient-profile">
       <PatientSidebar />
@@ -363,18 +319,6 @@ const PatientProfilePage = () => {
             )}
           </section>
 
-          <section className="mc-patient-profile__form">
-            <h2>Software Review</h2>
-            <p>Help us improve MediConnect with your feedback.</p>
-            <button
-              type="button"
-              className="mc-patient-profile__submit"
-              onClick={handleSoftwareReview}
-              disabled={submittingSoftwareReview}
-            >
-              {submittingSoftwareReview ? 'Submitting...' : 'Rate Software'}
-            </button>
-          </section>
           </>
         )}
       </main>

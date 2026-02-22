@@ -30,7 +30,6 @@ const DoctorDashboardPage = () => {
   const [availabilityMode, setAvailabilityMode] = useState('custom');
   const [availabilitySlots, setAvailabilitySlots] = useState(DEFAULT_CUSTOM_SLOTS);
   const [savingAvailability, setSavingAvailability] = useState(false);
-  const [submittingSoftwareReview, setSubmittingSoftwareReview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -157,45 +156,6 @@ const DoctorDashboardPage = () => {
     .filter((item) => ['pending', 'confirmed'].includes(item.status))
     .slice(0, 5);
 
-  const handleSoftwareReview = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login?role=doctor');
-      return;
-    }
-
-    const ratingInput = window.prompt('Rate MediConnect software from 1 to 5:');
-    if (!ratingInput) return;
-    const rating = Number.parseInt(ratingInput, 10);
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      setError('Software rating must be between 1 and 5.');
-      return;
-    }
-
-    const reviewText = window.prompt('Optional feedback for software:', '') || '';
-
-    setSubmittingSoftwareReview(true);
-    setError('');
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/reviews/software`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ rating, review_text: reviewText })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit software review');
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmittingSoftwareReview(false);
-    }
-  };
-
   return (
     <div className="mc-doctor-dashboard-layout">
       <DoctorSidebar />
@@ -313,13 +273,6 @@ const DoctorDashboardPage = () => {
                   ))}
                 </ul>
               )}
-              <button
-                className="mc-doctor-dashboard__button"
-                onClick={handleSoftwareReview}
-                disabled={submittingSoftwareReview}
-              >
-                {submittingSoftwareReview ? 'Submitting...' : 'Rate Software'}
-              </button>
             </section>
           </div>
         )}

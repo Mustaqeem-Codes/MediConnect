@@ -87,6 +87,28 @@ const PatientAppointmentsPage = () => {
       return;
     }
 
+    const maybeSubmitSoftwareReview = async () => {
+      const wants = window.confirm('Would you like to rate the MediConnect software too? (optional)');
+      if (!wants) return;
+
+      const softwareRatingInput = window.prompt('Rate MediConnect software from 1 to 5:');
+      if (!softwareRatingInput) return;
+      const softwareRating = Number.parseInt(softwareRatingInput, 10);
+      if (!Number.isInteger(softwareRating) || softwareRating < 1 || softwareRating > 5) {
+        return;
+      }
+
+      const softwareReviewText = window.prompt('Optional software feedback:', '') || '';
+      await fetch(`${API_BASE_URL}/api/reviews/software`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rating: softwareRating, review_text: softwareReviewText })
+      });
+    };
+
     const ratingInput = window.prompt('Rate doctor from 1 to 5 (mandatory):');
     if (!ratingInput) return;
     const rating = Number.parseInt(ratingInput, 10);
@@ -119,6 +141,8 @@ const PatientAppointmentsPage = () => {
           item.id === appointmentId ? { ...item, patientReviewSubmitted: true } : item
         )
       );
+
+      await maybeSubmitSoftwareReview();
     } catch (err) {
       setError(err.message);
     } finally {
