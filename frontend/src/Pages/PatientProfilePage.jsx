@@ -18,6 +18,9 @@ const PatientProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [recordAccessRequests, setRecordAccessRequests] = useState([]);
+  const [processingRequestId, setProcessingRequestId] = useState(null);
+  const [submittingSoftwareReview, setSubmittingSoftwareReview] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -62,25 +65,38 @@ const PatientProfilePage = () => {
       setError('');
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/patients/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
+        const [profileRes, requestRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/patients/profile`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }),
+          fetch(`${API_BASE_URL}/api/patients/record-access-requests`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          })
+        ]);
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to load profile');
+        const [profileData, requestData] = await Promise.all([profileRes.json(), requestRes.json()]);
+
+        if (!profileRes.ok) {
+          throw new Error(profileData.error || 'Failed to load profile');
+        }
+        if (!requestRes.ok) {
+          throw new Error(requestData.error || 'Failed to load record access requests');
         }
 
         setFormData({
-          name: data.data.name || '',
-          phone: data.data.phone || '',
-          date_of_birth: data.data.date_of_birth
-            ? String(data.data.date_of_birth).slice(0, 10)
+          name: profileData.data.name || '',
+          phone: profileData.data.phone || '',
+          date_of_birth: profileData.data.date_of_birth
+            ? String(profileData.data.date_of_birth).slice(0, 10)
             : '',
-          ...parseLocation(data.data.location)
+          ...parseLocation(profileData.data.location)
         });
+
+        setRecordAccessRequests(requestData.data || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -139,6 +155,82 @@ const PatientProfilePage = () => {
     }
   };
 
+  const handleRecordAccessDecision = async (requestId, decision) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login?role=patient');
+      return;
+    }
+
+    setProcessingRequestId(requestId);
+    setError('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/patients/record-access-requests/${requestId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ decision })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update request');
+      }
+
+      setRecordAccessRequests((prev) => prev.filter((item) => item.id !== requestId));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProcessingRequestId(null);
+    }
+  };
+
+  const handleSoftwareReview = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login?role=patient');
+      return;
+    }
+
+    const ratingInput = window.prompt('Rate this software from 1 to 5:');
+    if (!ratingInput) return;
+    const rating = Number.parseInt(ratingInput, 10);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      setError('Software rating must be between 1 and 5.');
+      return;
+    }
+
+    const reviewText = window.prompt('Share software feedback (optional):', '') || '';
+
+    setSubmittingSoftwareReview(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reviews/software`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rating, review_text: reviewText })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit software review');
+      }
+
+      setSuccess('Thanks! Your software review has been submitted.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmittingSoftwareReview(false);
+    }
+  };
+
   return (
     <div className="mc-patient-profile">
       <PatientSidebar />
@@ -153,6 +245,7 @@ const PatientProfilePage = () => {
         {success && <div className="mc-patient-profile__success">{success}</div>}
 
         {!loading && (
+          <>
           <form className="mc-patient-profile__form" onSubmit={handleSubmit}>
             <label className="mc-patient-profile__field">
               <span>Full Name</span>
@@ -237,6 +330,52 @@ const PatientProfilePage = () => {
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
+
+          <section className="mc-patient-profile__form">
+            <h2>Full Record Access Requests</h2>
+            {recordAccessRequests.length === 0 ? (
+              <p>No pending requests.</p>
+            ) : (
+              recordAccessRequests.map((request) => (
+                <div key={request.id} className="mc-patient-profile__field">
+                  <span>Dr. {request.doctor_name} requested full record access.</span>
+                  <span>{request.reason ? `Reason: ${request.reason}` : 'No reason provided.'}</span>
+                  <div>
+                    <button
+                      type="button"
+                      className="mc-patient-profile__submit"
+                      onClick={() => handleRecordAccessDecision(request.id, 'approved')}
+                      disabled={processingRequestId === request.id}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      className="mc-patient-profile__submit"
+                      onClick={() => handleRecordAccessDecision(request.id, 'denied')}
+                      disabled={processingRequestId === request.id}
+                    >
+                      Deny
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </section>
+
+          <section className="mc-patient-profile__form">
+            <h2>Software Review</h2>
+            <p>Help us improve MediConnect with your feedback.</p>
+            <button
+              type="button"
+              className="mc-patient-profile__submit"
+              onClick={handleSoftwareReview}
+              disabled={submittingSoftwareReview}
+            >
+              {submittingSoftwareReview ? 'Submitting...' : 'Rate Software'}
+            </button>
+          </section>
+          </>
         )}
       </main>
     </div>

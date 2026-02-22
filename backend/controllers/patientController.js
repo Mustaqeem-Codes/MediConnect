@@ -1,5 +1,6 @@
 // backend/controllers/patientController.js
 const Patient = require('../models/Patient');
+const MedicalRecordAccessRequest = require('../models/MedicalRecordAccessRequest');
 const jwt = require('jsonwebtoken');
 
 // Generate JWT token
@@ -214,9 +215,59 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// @desc    List pending full-record access requests for current patient
+// @route   GET /api/patients/record-access-requests
+// @access  Private (patient)
+const getRecordAccessRequests = async (req, res) => {
+  try {
+    const requests = await MedicalRecordAccessRequest.findPendingByPatientId(req.user.id);
+    res.json({ success: true, data: requests });
+  } catch (error) {
+    console.error('Get record access requests error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Approve or deny a full-record access request
+// @route   PUT /api/patients/record-access-requests/:id
+// @access  Private (patient)
+const decideRecordAccessRequest = async (req, res) => {
+  try {
+    const { decision } = req.body;
+    const status = decision === 'approved' ? 'approved' : decision === 'denied' ? 'denied' : null;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        error: 'Decision must be approved or denied'
+      });
+    }
+
+    const updated = await MedicalRecordAccessRequest.decide({
+      id: req.params.id,
+      patient_id: req.user.id,
+      status
+    });
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        error: 'Record access request not found'
+      });
+    }
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Decide record access request error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
 module.exports = {
   registerPatient,
   loginPatient,
   getProfile,
-  updateProfile
+  updateProfile,
+  getRecordAccessRequests,
+  decideRecordAccessRequest
 };

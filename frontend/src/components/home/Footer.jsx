@@ -34,7 +34,7 @@ const Footer = () => {
       { name: 'Privacy Policy', url: '' },
       { name: 'Cookie Policy', url: '' },
       { name: 'HIPAA Compliance', url: '' },
-      { name: 'Accessibility', url: '' }
+      { name: 'Accessibility', url: '/login?role=admin&entry=accessibility' }
     ]
   };
 

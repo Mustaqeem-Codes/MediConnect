@@ -9,7 +9,7 @@ const formatTimestamp = (value) => {
   return date.toLocaleString();
 };
 
-const AppointmentMessages = ({ appointmentId, appointmentStatus, role, onClose }) => {
+const AppointmentMessages = ({ appointmentId, appointmentStatus, interactionClosed = false, role, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -17,17 +17,20 @@ const AppointmentMessages = ({ appointmentId, appointmentStatus, role, onClose }
   const [error, setError] = useState('');
 
   const isRejected = appointmentStatus === 'rejected';
-  const canSend = role === 'patient' || appointmentStatus === 'pending' || appointmentStatus === 'confirmed' || appointmentStatus === 'rejected';
+  const canSend = !interactionClosed && (role === 'patient' || appointmentStatus === 'pending' || appointmentStatus === 'confirmed' || appointmentStatus === 'rejected' || appointmentStatus === 'completed');
 
   const helpText = useMemo(() => {
     if (role === 'doctor' && isRejected) {
       return 'You can send one message to explain the rejection.';
     }
+    if (interactionClosed) {
+      return 'Conversation is closed after the doctor submitted the final report.';
+    }
     if (role === 'doctor') {
       return 'Messages are available for pending and confirmed requests.';
     }
     return 'Messages are available after a request is created.';
-  }, [role, isRejected]);
+  }, [role, isRejected, interactionClosed]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');

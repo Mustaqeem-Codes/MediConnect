@@ -26,6 +26,8 @@ const PatientAppointmentsPage = () => {
   const [error, setError] = useState('');
   const [activeAppointmentId, setActiveAppointmentId] = useState(null);
   const [activeAppointmentStatus, setActiveAppointmentStatus] = useState('');
+  const [activeInteractionClosed, setActiveInteractionClosed] = useState(false);
+  const [reviewingDoctorId, setReviewingDoctorId] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -56,7 +58,15 @@ const PatientAppointmentsPage = () => {
           specialty: item.doctor_specialty,
           date: formatDate(item.appointment_date),
           time: formatTime(item.appointment_time),
-          status: item.status || 'pending'
+          status: item.status || 'pending',
+          reportSubmittedAt: item.report_submitted_at,
+          interactionClosedAt: item.interaction_closed_at,
+          treatmentSummary: item.treatment_summary,
+          medicalReport: item.medical_report,
+          medicines: item.medicines,
+          prescriptions: item.prescriptions,
+          recommendations: item.recommendations,
+          patientReviewSubmitted: item.patient_review_submitted
         }));
 
         setAppointments(mapped);
@@ -69,6 +79,52 @@ const PatientAppointmentsPage = () => {
 
     loadAppointments();
   }, [navigate]);
+
+  const handleReviewDoctor = async (appointmentId) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login?role=patient');
+      return;
+    }
+
+    const ratingInput = window.prompt('Rate doctor from 1 to 5 (mandatory):');
+    if (!ratingInput) return;
+    const rating = Number.parseInt(ratingInput, 10);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      setError('Rating must be between 1 and 5.');
+      return;
+    }
+
+    const reviewText = window.prompt('Optional review text:', '') || '';
+
+    setReviewingDoctorId(appointmentId);
+    setError('');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reviews/appointments/${appointmentId}/doctor`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rating, review_text: reviewText })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit doctor review');
+      }
+
+      setAppointments((prev) =>
+        prev.map((item) =>
+          item.id === appointmentId ? { ...item, patientReviewSubmitted: true } : item
+        )
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setReviewingDoctorId(null);
+    }
+  };
 
   return (
     <div className="mc-patient-appointments">
@@ -104,17 +160,42 @@ const PatientAppointmentsPage = () => {
                       <span className={`mc-patient-appointments__status mc-patient-appointments__status--${item.status}`}>
                         {item.status}
                       </span>
+                      {!item.interactionClosedAt && (
+                        <button
+                          type="button"
+                          className="mc-patient-appointments__message"
+                          onClick={() => {
+                            setActiveAppointmentId(item.id);
+                            setActiveAppointmentStatus(item.status);
+                            setActiveInteractionClosed(Boolean(item.interactionClosedAt));
+                          }}
+                        >
+                          Message
+                        </button>
+                      )}
+                    </div>
+                    {item.reportSubmittedAt && (
+                      <div className="mc-patient-appointments__meta">
+                        <strong>Treatment:</strong> {item.treatmentSummary || 'N/A'}<br />
+                        <strong>Medical Report:</strong> {item.medicalReport || 'N/A'}<br />
+                        <strong>Medicines:</strong> {Array.isArray(item.medicines) && item.medicines.length > 0 ? item.medicines.join(', ') : 'N/A'}<br />
+                        <strong>Prescriptions:</strong> {item.prescriptions || 'N/A'}<br />
+                        <strong>Recommendations:</strong> {item.recommendations || 'N/A'}
+                      </div>
+                    )}
+                    {item.reportSubmittedAt && !item.patientReviewSubmitted && (
                       <button
                         type="button"
                         className="mc-patient-appointments__message"
-                        onClick={() => {
-                          setActiveAppointmentId(item.id);
-                          setActiveAppointmentStatus(item.status);
-                        }}
+                        onClick={() => handleReviewDoctor(item.id)}
+                        disabled={reviewingDoctorId === item.id}
                       >
-                        Message
+                        {reviewingDoctorId === item.id ? 'Submitting...' : 'Review Doctor'}
                       </button>
-                    </div>
+                    )}
+                    {item.interactionClosedAt && !item.reportSubmittedAt && (
+                      <div className="mc-patient-appointments__meta">Consultation closed.</div>
+                    )}
                   </div>
                 ))
               )}
@@ -126,6 +207,7 @@ const PatientAppointmentsPage = () => {
           <AppointmentMessages
             appointmentId={activeAppointmentId}
             appointmentStatus={activeAppointmentStatus}
+            interactionClosed={activeInteractionClosed}
             role="patient"
             onClose={() => setActiveAppointmentId(null)}
           />

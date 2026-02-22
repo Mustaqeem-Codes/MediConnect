@@ -8,6 +8,8 @@ const doctorRoutes = require('./routes/doctorRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
+const { processPendingReportReminders } = require('./services/reportReminderService');
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +44,7 @@ app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Initialize database connection
 let dbConnected = false;
@@ -95,9 +98,13 @@ app.use((req, res) => {
       'POST /api/patients/register',
       'POST /api/patients/login',
       'GET /api/patients/profile',
+      'GET /api/patients/record-access-requests',
+      'PUT /api/patients/record-access-requests/:id',
       'POST /api/doctors/register',
       'POST /api/doctors/login',
       'GET /api/doctors/profile',
+      'GET /api/doctors/notifications',
+      'PUT /api/doctors/notifications/:id/read',
       'POST /api/admin/login',
       'GET /api/admin/overview',
       'GET /api/admin/doctors',
@@ -109,8 +116,17 @@ app.use((req, res) => {
       'GET /api/appointments/patient',
       'GET /api/appointments/doctor',
       'PUT /api/appointments/:id/status',
+      'PUT /api/appointments/:id/report',
+      'GET /api/appointments/:id/patient-record/latest',
+      'POST /api/appointments/:id/patient-record/request-access',
+      'GET /api/appointments/:id/patient-record/full',
       'GET /api/messages/appointments/:appointmentId',
-      'POST /api/messages/appointments/:appointmentId'
+      'POST /api/messages/appointments/:appointmentId',
+      'POST /api/reviews/appointments/:appointmentId/doctor',
+      'POST /api/reviews/appointments/:appointmentId/patient',
+      'POST /api/reviews/software',
+      'GET /api/reviews/doctors/:doctorId/summary',
+      'GET /api/reviews/software/summary'
     ]
   });
 });
@@ -127,10 +143,33 @@ app.use((err, req, res, next) => {
 
 // Start server with database initialization
 const PORT = process.env.PORT || 5000;
+const REPORT_REMINDER_INTERVAL_MS = 60 * 60 * 1000;
 
 const startServer = async () => {
   // Initialize database
   dbConnected = await initDB();
+
+  if (dbConnected) {
+    try {
+      const count = await processPendingReportReminders();
+      if (count > 0) {
+        console.log(`📣 Report reminder notifications sent: ${count}`);
+      }
+    } catch (error) {
+      console.error('❌ Initial report reminder job failed:', error.message);
+    }
+
+    setInterval(async () => {
+      try {
+        const count = await processPendingReportReminders();
+        if (count > 0) {
+          console.log(`📣 Report reminder notifications sent: ${count}`);
+        }
+      } catch (error) {
+        console.error('❌ Scheduled report reminder job failed:', error.message);
+      }
+    }, REPORT_REMINDER_INTERVAL_MS);
+  }
   
   // Start listening
   app.listen(PORT, () => {

@@ -6,7 +6,9 @@ const {
   registerPatient,
   loginPatient,
   getProfile,
-  updateProfile
+  updateProfile,
+  getRecordAccessRequests,
+  decideRecordAccessRequest
 } = require('../controllers/patientController');
 
 // @route   POST /api/patients/register
@@ -28,5 +30,15 @@ router.get('/profile', protect, getProfile);
 // @desc    Update current patient profile
 // @access  Private
 router.put('/profile', protect, updateProfile);
+
+// @route   GET /api/patients/record-access-requests
+// @desc    Get pending full-record access requests for current patient
+// @access  Private (patient)
+router.get('/record-access-requests', protect, getRecordAccessRequests);
+
+// @route   PUT /api/patients/record-access-requests/:id
+// @desc    Approve or deny full-record access request
+// @access  Private (patient)
+router.put('/record-access-requests/:id', protect, decideRecordAccessRequest);
 
 module.exports = router;

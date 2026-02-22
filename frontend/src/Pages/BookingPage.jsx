@@ -9,6 +9,9 @@ const BookingPage = () => {
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentTime, setAppointmentTime] = useState('');
   const [reason, setReason] = useState('');
+  const [consultationType, setConsultationType] = useState('physical_checkup');
+  const [estimatedUnits, setEstimatedUnits] = useState(3);
+  const [triageLoading, setTriageLoading] = useState(false);
   const [doctor, setDoctor] = useState(null);
   const [slots, setSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -41,6 +44,40 @@ const BookingPage = () => {
   }, [doctorId]);
 
   useEffect(() => {
+    const baseUnits = consultationType === 'physical_checkup' ? 3 : 2;
+    const trimmedReason = reason.trim();
+
+    if (!trimmedReason) {
+      setEstimatedUnits(baseUnits);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setTriageLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/appointments/triage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ consultation_type: consultationType, reason: trimmedReason })
+        });
+
+        const data = await response.json();
+        if (response.ok && data?.data?.estimated_duration_units) {
+          setEstimatedUnits(Number(data.data.estimated_duration_units) || baseUnits);
+        } else {
+          setEstimatedUnits(baseUnits);
+        }
+      } catch {
+        setEstimatedUnits(baseUnits);
+      } finally {
+        setTriageLoading(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [consultationType, reason]);
+
+  useEffect(() => {
     if (!appointmentDate) {
       setSlots([]);
       setAppointmentTime('');
@@ -52,13 +89,15 @@ const BookingPage = () => {
       setError('');
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/appointments/doctor/${doctorId}/slots?date=${appointmentDate}`
+          `${API_BASE_URL}/api/appointments/doctor/${doctorId}/slots?date=${appointmentDate}&units=${estimatedUnits}`
         );
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.error || 'Failed to load available slots');
         }
-        setSlots(data.data.available_slots || []);
+        const nextSlots = data.data.available_slots || [];
+        setSlots(nextSlots);
+        setAppointmentTime((current) => (current && !nextSlots.includes(current) ? '' : current));
       } catch (err) {
         setSlots([]);
         setError(err.message);
@@ -68,7 +107,7 @@ const BookingPage = () => {
     };
 
     loadSlots();
-  }, [appointmentDate, doctorId]);
+  }, [appointmentDate, doctorId, estimatedUnits]);
 
   const handleSubmit = async () => {
     setError('');
@@ -102,7 +141,8 @@ const BookingPage = () => {
           doctor_id: Number(doctorId),
           appointment_date: appointmentDate,
           appointment_time: `${appointmentTime}:00`,
-          reason: reason.trim()
+          reason: reason.trim(),
+          consultation_type: consultationType
         })
       });
 
@@ -175,6 +215,22 @@ const BookingPage = () => {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="mc-booking__panel">
+          <h3>Consultation Type</h3>
+          <select
+            className="mc-booking__input"
+            value={consultationType}
+            onChange={(event) => setConsultationType(event.target.value)}
+          >
+            <option value="physical_checkup">Physical Checkup</option>
+            <option value="video_consultation">Video Consultation</option>
+          </select>
+          <p style={{ marginTop: 8 }}>
+            Estimated duration: {estimatedUnits * 10} minutes ({estimatedUnits} units)
+            {triageLoading ? ' • estimating…' : ''}
+          </p>
         </div>
 
         <div className="mc-booking__panel">

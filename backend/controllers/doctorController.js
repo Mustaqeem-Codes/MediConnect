@@ -1,5 +1,6 @@
 // backend/controllers/doctorController.js
 const Doctor = require('../models/Doctor');
+const Notification = require('../models/Notification');
 const jwt = require('jsonwebtoken');
 
 const normalizeAvailabilitySlots = (slots) => {
@@ -292,11 +293,42 @@ const listDoctors = async (req, res) => {
   }
 };
 
+// @desc    Get doctor notifications
+// @route   GET /api/doctors/notifications
+// @access  Private (doctor)
+const getDoctorNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.findByDoctorId(req.user.id);
+    res.json({ success: true, data: notifications });
+  } catch (error) {
+    console.error('Get doctor notifications error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Mark doctor notification as read
+// @route   PUT /api/doctors/notifications/:id/read
+// @access  Private (doctor)
+const markNotificationRead = async (req, res) => {
+  try {
+    const updated = await Notification.markAsRead({ id: req.params.id, doctor_id: req.user.id });
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Notification not found' });
+    }
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
 module.exports = {
   registerDoctor,
   loginDoctor,
   getProfile,
   listDoctors,
   getDoctorById,
-  updateAvailability
+  updateAvailability,
+  getDoctorNotifications,
+  markNotificationRead
 };

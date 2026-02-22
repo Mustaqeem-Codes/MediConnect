@@ -9,6 +9,8 @@ const canAccessAppointment = (appointment, user) => {
   return false;
 };
 
+const isInteractionClosed = (appointment) => Boolean(appointment?.interaction_closed_at || appointment?.report_submitted_at);
+
 // @desc    Get messages for an appointment
 // @route   GET /api/messages/appointments/:appointmentId
 // @access  Private (patient, doctor)
@@ -19,6 +21,13 @@ const getAppointmentMessages = async (req, res) => {
 
     if (!canAccessAppointment(appointment, req.user)) {
       return res.status(404).json({ success: false, error: 'Appointment not found' });
+    }
+
+    if (isInteractionClosed(appointment)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Conversation is closed after report submission'
+      });
     }
 
     const messages = await Message.findByAppointment(appointmentId);
@@ -51,8 +60,15 @@ const sendAppointmentMessage = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Appointment not found' });
     }
 
+    if (isInteractionClosed(appointment)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Conversation is closed after report submission'
+      });
+    }
+
     if (req.user.role === 'doctor') {
-      const allowedStatuses = ['pending', 'confirmed', 'rejected'];
+      const allowedStatuses = ['pending', 'confirmed', 'rejected', 'completed'];
       if (!allowedStatuses.includes(appointment.status)) {
         return res.status(403).json({
           success: false,

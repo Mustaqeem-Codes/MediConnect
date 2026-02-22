@@ -1,12 +1,18 @@
 // frontend/src/pages/LoginPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import LoginForm from '../components/auth/LoginForm';
+import AdminLoginForm from '../components/auth/AdminLoginForm';
 import SocialLoginButtons from '../components/auth/SocialLoginButtons';
 import logoImage from '../assets/MC Logo.png';
 import '../styles/LoginPage.css';
 
 const LoginPage = () => {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const isAdminAccessEntry = params.get('entry') === 'accessibility' && params.get('role') === 'admin';
+
   return (
     <div className="login-page">
       <div className="login-page-container">
@@ -29,18 +35,19 @@ const LoginPage = () => {
 
         {/* Right Column - Form */}
         <div className="login-form-column">
-          <LoginForm />
-          <SocialLoginButtons />
-          
-          {/* Sign up link */}
-          <div className="login-signup-prompt">
-            <p className="login-signup-text">
-              Don't have an account?{' '}
-              <Link to="/register" className="login-signup-link">
-                Sign up
-              </Link>
-            </p>
-          </div>
+          {isAdminAccessEntry ? <AdminLoginForm /> : <LoginForm />}
+          {!isAdminAccessEntry && <SocialLoginButtons />}
+
+          {!isAdminAccessEntry && (
+            <div className="login-signup-prompt">
+              <p className="login-signup-text">
+                Don't have an account?{' '}
+                <Link to="/register" className="login-signup-link">
+                  Sign up
+                </Link>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -18,15 +18,19 @@ const formatTime = (value) => {
   return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 };
 
-const DEFAULT_CUSTOM_SLOTS = '09:00,10:00,11:00,14:00,15:00';
+const DEFAULT_CUSTOM_SLOTS = ['09:00', '10:00', '11:00', '14:00', '15:00'];
+
+const HOUR_SLOTS = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, '0')}:00`);
 
 const DoctorDashboardPage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [appointments, setAppointments] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [availabilityMode, setAvailabilityMode] = useState('custom');
-  const [availabilitySlotsInput, setAvailabilitySlotsInput] = useState(DEFAULT_CUSTOM_SLOTS);
+  const [availabilitySlots, setAvailabilitySlots] = useState(DEFAULT_CUSTOM_SLOTS);
   const [savingAvailability, setSavingAvailability] = useState(false);
+  const [submittingSoftwareReview, setSubmittingSoftwareReview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -42,21 +46,31 @@ const DoctorDashboardPage = () => {
       setError('');
 
       try {
-        const [profileRes, apptRes] = await Promise.all([
+        const [profileRes, apptRes, notificationsRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/doctors/profile`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
           fetch(`${API_BASE_URL}/api/appointments/doctor`, {
             headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch(`${API_BASE_URL}/api/doctors/notifications`, {
+            headers: { Authorization: `Bearer ${token}` }
           })
         ]);
 
-        const [profileData, apptData] = await Promise.all([profileRes.json(), apptRes.json()]);
+        const [profileData, apptData, notificationsData] = await Promise.all([
+          profileRes.json(),
+          apptRes.json(),
+          notificationsRes.json()
+        ]);
         if (!profileRes.ok) {
           throw new Error(profileData.error || 'Failed to load profile');
         }
         if (!apptRes.ok) {
           throw new Error(apptData.error || 'Failed to load appointments');
+        }
+        if (!notificationsRes.ok) {
+          throw new Error(notificationsData.error || 'Failed to load notifications');
         }
 
         setProfile(profileData.data);
@@ -69,11 +83,14 @@ const DoctorDashboardPage = () => {
         } else {
           setAvailabilityMode('custom');
           if (profileSlots.length > 0) {
-            setAvailabilitySlotsInput(profileSlots.join(','));
+            setAvailabilitySlots(profileSlots);
+          } else {
+            setAvailabilitySlots(DEFAULT_CUSTOM_SLOTS);
           }
         }
 
         setAppointments(apptData.data || []);
+        setNotifications(notificationsData.data || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -95,10 +112,9 @@ const DoctorDashboardPage = () => {
     setError('');
 
     try {
-      const slots = availabilitySlotsInput
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean);
+      const slots = Array.isArray(availabilitySlots)
+        ? Array.from(new Set(availabilitySlots)).sort()
+        : [];
 
       const response = await fetch(`${API_BASE_URL}/api/doctors/availability`, {
         method: 'PUT',
@@ -130,9 +146,55 @@ const DoctorDashboardPage = () => {
     }
   };
 
+  const toggleSlot = (slot) => {
+    setAvailabilitySlots((prev) => {
+      const current = Array.isArray(prev) ? prev : [];
+      return current.includes(slot) ? current.filter((item) => item !== slot) : [...current, slot];
+    });
+  };
+
   const upcomingAppointments = appointments
     .filter((item) => ['pending', 'confirmed'].includes(item.status))
     .slice(0, 5);
+
+  const handleSoftwareReview = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login?role=doctor');
+      return;
+    }
+
+    const ratingInput = window.prompt('Rate MediConnect software from 1 to 5:');
+    if (!ratingInput) return;
+    const rating = Number.parseInt(ratingInput, 10);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      setError('Software rating must be between 1 and 5.');
+      return;
+    }
+
+    const reviewText = window.prompt('Optional feedback for software:', '') || '';
+
+    setSubmittingSoftwareReview(true);
+    setError('');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reviews/software`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rating, review_text: reviewText })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit software review');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmittingSoftwareReview(false);
+    }
+  };
 
   return (
     <div className="mc-doctor-dashboard-layout">
@@ -202,13 +264,25 @@ const DoctorDashboardPage = () => {
                   </div>
 
                   {availabilityMode === 'custom' && (
-                    <input
-                      type="text"
-                      className="mc-doctor-dashboard__input"
-                      value={availabilitySlotsInput}
-                      onChange={(event) => setAvailabilitySlotsInput(event.target.value)}
-                      placeholder="e.g. 09:00,10:30,14:00"
-                    />
+                    <>
+                      <p className="mc-doctor-dashboard__muted" style={{ marginTop: '0.75rem' }}>
+                        Select the hours you are available. Patients book in hourly windows with capacity-based queueing.
+                      </p>
+                      <div className="mc-doctor-dashboard__slot-grid" role="group" aria-label="Availability hours">
+                        {HOUR_SLOTS.map((slot) => (
+                          <button
+                            key={slot}
+                            type="button"
+                            className={availabilitySlots.includes(slot)
+                              ? 'mc-doctor-dashboard__slot-btn is-active'
+                              : 'mc-doctor-dashboard__slot-btn'}
+                            onClick={() => toggleSlot(slot)}
+                          >
+                            {formatTime(slot)}
+                          </button>
+                        ))}
+                      </div>
+                    </>
                   )}
 
                   <button
@@ -226,6 +300,26 @@ const DoctorDashboardPage = () => {
               <h2>Summary</h2>
               <p className="mc-doctor-dashboard__metric">{appointments.length}</p>
               <span className="mc-doctor-dashboard__muted">Total appointments on your account</span>
+            </section>
+
+            <section className="mc-doctor-dashboard__card">
+              <h2>Notifications</h2>
+              {notifications.length === 0 ? (
+                <p className="mc-doctor-dashboard__muted">No notifications.</p>
+              ) : (
+                <ul className="mc-doctor-dashboard__list">
+                  {notifications.slice(0, 5).map((item) => (
+                    <li key={item.id}>{item.title} - {item.body}</li>
+                  ))}
+                </ul>
+              )}
+              <button
+                className="mc-doctor-dashboard__button"
+                onClick={handleSoftwareReview}
+                disabled={submittingSoftwareReview}
+              >
+                {submittingSoftwareReview ? 'Submitting...' : 'Rate Software'}
+              </button>
             </section>
           </div>
         )}
