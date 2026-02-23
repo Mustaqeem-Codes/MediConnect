@@ -147,6 +147,157 @@
   color: #B91C1C;
 }
 
+.mc-doctor-appointments__status--completed {
+  background: #DBEAFE;
+  color: #1D4ED8;
+}
+
+/* Header with refresh button */
+.mc-doctor-appointments__header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.mc-doctor-appointments__refresh-btn {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.mc-doctor-appointments__refresh-btn:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.mc-doctor-appointments__refresh-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Enhanced error display */
+.mc-doctor-appointments__error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-color: #FECACA;
+  background: #FEF2F2;
+  color: #B91C1C;
+}
+
+.mc-doctor-appointments__error-icon {
+  font-size: 1.25rem;
+}
+
+.mc-doctor-appointments__error-retry {
+  margin-left: auto;
+  padding: 0.375rem 0.75rem;
+  background: #B91C1C;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mc-doctor-appointments__error-retry:hover {
+  background: #991B1B;
+}
+
+/* Empty state */
+.mc-doctor-appointments__empty {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6B7280;
+}
+
+.mc-doctor-appointments__empty p {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.mc-doctor-appointments__empty span {
+  font-size: 0.875rem;
+}
+
+/* Record preview */
+.mc-doctor-appointments__record-preview {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #F3F4F6;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.mc-doctor-appointments__record-label {
+  font-weight: 600;
+  color: #374151;
+  margin-right: 0.5rem;
+}
+
+.mc-doctor-appointments__record-text {
+  color: #6B7280;
+}
+
+/* No record styling */
+.mc-doctor-appointments__no-record {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #FFFBEB;
+  border: 1px dashed #FCD34D;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #92400E;
+}
+
+.mc-doctor-appointments__no-record-icon {
+  font-size: 1rem;
+}
+
+.mc-doctor-appointments__no-record-hint {
+  width: 100%;
+  font-size: 0.75rem;
+  color: #B45309;
+  opacity: 0.8;
+}
+
+/* Video call button */
+.mc-doctor-appointments__btn--video {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+}
+
+.mc-doctor-appointments__btn--video:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Submit report button */
+.mc-doctor-appointments__btn--submit-report {
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  color: white;
+}
+
+.mc-doctor-appointments__btn--submit-report:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
 @media (max-width: 960px) {
   .mc-doctor-appointments {
     grid-template-columns: 1fr;

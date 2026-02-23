@@ -156,3 +156,96 @@
     justify-items: start;
   }
 }
+
+/* Header with refresh button */
+.mc-patient-appointments__header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.mc-patient-appointments__refresh-btn {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.mc-patient-appointments__refresh-btn:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.mc-patient-appointments__refresh-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Enhanced error display */
+.mc-patient-appointments__error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-color: #FECACA;
+  background: #FEF2F2;
+  color: #B91C1C;
+}
+
+.mc-patient-appointments__error-icon {
+  font-size: 1.25rem;
+}
+
+.mc-patient-appointments__error-retry {
+  margin-left: auto;
+  padding: 0.375rem 0.75rem;
+  background: #B91C1C;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mc-patient-appointments__error-retry:hover {
+  background: #991B1B;
+}
+
+.mc-patient-appointments__status--completed {
+  background: #DBEAFE;
+  color: #1D4ED8;
+}
+
+/* Button styles */
+.mc-patient-appointments__btn {
+  border: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.mc-patient-appointments__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mc-patient-appointments__btn--video {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+}
+
+.mc-patient-appointments__btn--video:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}

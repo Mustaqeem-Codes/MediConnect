@@ -15,9 +15,11 @@ import DoctorsPage from './Pages/DoctorsPage';
 import DoctorDetailPage from './Pages/DoctorDetailPage';
 import BookingPage from './Pages/BookingPage';
 import PrivateRoute from './components/routing/PrivateRoute';
+import { ToastProvider } from './components/Toast';
 
 function App() {
   return (
+    <ToastProvider>
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -101,6 +103,7 @@ function App() {
         />
       </Routes>
     </Router>
+    </ToastProvider>
   );
 }
 

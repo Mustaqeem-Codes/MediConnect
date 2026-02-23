@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import DoctorSidebar from '../components/dashboard/DoctorSidebar';
+import { useToast } from '../components/Toast';
 import '../styles/DoctorDashboardPage.css';
 import { API_BASE_URL } from '../config/api';
 
@@ -24,6 +25,8 @@ const HOUR_SLOTS = Array.from({ length: 24 }, (_, hour) => `${String(hour).padSt
 
 const DoctorDashboardPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const toast = useToast();
   const [profile, setProfile] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -32,73 +35,85 @@ const DoctorDashboardPage = () => {
   const [savingAvailability, setSavingAvailability] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
+  const loadProfile = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
       return;
     }
 
-    const loadProfile = async () => {
-      setLoading(true);
-      setError('');
+    setLoading(true);
+    setError('');
 
-      try {
-        const [profileRes, apptRes, notificationsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/doctors/profile`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          fetch(`${API_BASE_URL}/api/appointments/doctor`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          fetch(`${API_BASE_URL}/api/doctors/notifications`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
+    try {
+      const [profileRes, apptRes, notificationsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/doctors/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_BASE_URL}/api/appointments/doctor`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_BASE_URL}/api/doctors/notifications`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
 
-        const [profileData, apptData, notificationsData] = await Promise.all([
-          profileRes.json(),
-          apptRes.json(),
-          notificationsRes.json()
-        ]);
-        if (!profileRes.ok) {
-          throw new Error(profileData.error || 'Failed to load profile');
-        }
-        if (!apptRes.ok) {
-          throw new Error(apptData.error || 'Failed to load appointments');
-        }
-        if (!notificationsRes.ok) {
-          throw new Error(notificationsData.error || 'Failed to load notifications');
-        }
-
-        setProfile(profileData.data);
-
-        const profileSlots = Array.isArray(profileData.data?.availability_slots)
-          ? profileData.data.availability_slots
-          : [];
-        if (profileData.data?.availability_mode === '24_7') {
-          setAvailabilityMode('24_7');
-        } else {
-          setAvailabilityMode('custom');
-          if (profileSlots.length > 0) {
-            setAvailabilitySlots(profileSlots);
-          } else {
-            setAvailabilitySlots(DEFAULT_CUSTOM_SLOTS);
-          }
-        }
-
-        setAppointments(apptData.data || []);
-        setNotifications(notificationsData.data || []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      const [profileData, apptData, notificationsData] = await Promise.all([
+        profileRes.json(),
+        apptRes.json(),
+        notificationsRes.json()
+      ]);
+      if (!profileRes.ok) {
+        const errorMsg = profileData.error || 'Failed to load profile';
+        throw new Error(errorMsg);
       }
-    };
+      if (!apptRes.ok) {
+        const errorMsg = apptData.error || 'Failed to load appointments';
+        throw new Error(errorMsg);
+      }
+      if (!notificationsRes.ok) {
+        // Non-critical error, just log it
+        console.warn('Failed to load notifications:', notificationsData.error);
+      }
 
+      setProfile(profileData.data);
+
+      const profileSlots = Array.isArray(profileData.data?.availability_slots)
+        ? profileData.data.availability_slots
+        : [];
+      if (profileData.data?.availability_mode === '24_7') {
+        setAvailabilityMode('24_7');
+      } else {
+        setAvailabilityMode('custom');
+        if (profileSlots.length > 0) {
+          setAvailabilitySlots(profileSlots);
+        } else {
+          setAvailabilitySlots(DEFAULT_CUSTOM_SLOTS);
+        }
+      }
+
+      setAppointments(apptData.data || []);
+      setNotifications(notificationsData.data || []);
+    } catch (err) {
+      const errorMsg = err.message || 'An unexpected error occurred';
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate, toast]);
+
+  // Auto-refresh when navigating back to this page
+  useEffect(() => {
     loadProfile();
-  }, [navigate]);
+  }, [loadProfile, location.key, refreshKey]);
+
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1);
+    toast.info('Refreshing dashboard...');
+  };
 
   const handleSaveAvailability = async () => {
     const token = localStorage.getItem('token');
@@ -129,7 +144,8 @@ const DoctorDashboardPage = () => {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save availability');
+        const errorMsg = data.error || 'Failed to save availability';
+        throw new Error(errorMsg);
       }
 
       setProfile((prev) => prev ? {
@@ -138,8 +154,11 @@ const DoctorDashboardPage = () => {
         availability_slots: data.data.availability_slots,
         should_set_availability: false
       } : prev);
+      toast.success('Availability saved successfully');
     } catch (err) {
-      setError(err.message);
+      const errorMsg = err.message || 'Failed to save availability';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSavingAvailability(false);
     }
@@ -161,17 +180,40 @@ const DoctorDashboardPage = () => {
       <DoctorSidebar />
       <div className="mc-doctor-dashboard">
         <header className="mc-doctor-dashboard__header">
-          <div>
-            <p className="mc-doctor-dashboard__eyebrow">Doctor Dashboard</p>
-            <h1 className="mc-doctor-dashboard__title">
-              {profile ? `Welcome, Dr. ${profile.name}!` : 'Welcome'}
-            </h1>
-            <p className="mc-doctor-dashboard__subtitle">Today at a glance.</p>
+          <div className="mc-doctor-dashboard__header-content">
+            <div>
+              <p className="mc-doctor-dashboard__eyebrow">Doctor Dashboard</p>
+              <h1 className="mc-doctor-dashboard__title">
+                {profile ? `Welcome, Dr. ${profile.name}!` : 'Welcome'}
+              </h1>
+              <p className="mc-doctor-dashboard__subtitle">Today at a glance.</p>
+            </div>
+            <button
+              type="button"
+              className="mc-doctor-dashboard__refresh-btn"
+              onClick={handleRefresh}
+              disabled={loading}
+              title="Refresh dashboard"
+            >
+              {loading ? 'Refreshing...' : '↻ Refresh'}
+            </button>
           </div>
         </header>
 
         {loading && <div className="mc-doctor-dashboard__state">Loading your profile...</div>}
-        {error && <div className="mc-doctor-dashboard__error">{error}</div>}
+        {error && (
+          <div className="mc-doctor-dashboard__error">
+            <span className="mc-doctor-dashboard__error-icon">⚠</span>
+            <span>{error}</span>
+            <button 
+              type="button" 
+              className="mc-doctor-dashboard__error-retry"
+              onClick={handleRefresh}
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {!loading && !error && (
           <div className="mc-doctor-dashboard__grid">

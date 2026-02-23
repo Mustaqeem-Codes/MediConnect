@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PatientSidebar from '../components/dashboard/PatientSidebar';
 import AppointmentMessages from '../components/messages/AppointmentMessages';
+import VideoCallModal from '../components/VideoCallModal';
+import { useToast } from '../components/Toast';
 import '../styles/PatientAppointmentsPage.css';
 import { API_BASE_URL } from '../config/api';
 
@@ -21,6 +23,8 @@ const formatTime = (value) => {
 
 const PatientAppointmentsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const toast = useToast();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,59 +32,83 @@ const PatientAppointmentsPage = () => {
   const [activeAppointmentStatus, setActiveAppointmentStatus] = useState('');
   const [activeInteractionClosed, setActiveInteractionClosed] = useState(false);
   const [reviewingDoctorId, setReviewingDoctorId] = useState(null);
+  const [activeVideoCall, setActiveVideoCall] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
+  const loadAppointments = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login?role=patient');
       return;
     }
 
-    const loadAppointments = async () => {
-      setLoading(true);
-      setError('');
+    setLoading(true);
+    setError('');
 
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/appointments/patient`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to load appointments');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/appointments/patient`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
+      });
 
-        const mapped = data.data.map((item) => ({
-          id: item.id,
-          doctor: item.doctor_name,
-          specialty: item.doctor_specialty,
-          date: formatDate(item.appointment_date),
-          time: formatTime(item.appointment_time),
-          status: item.status || 'pending',
-          consultationType: item.consultation_type || 'physical_checkup',
-          videoRoomId: item.video_room_id,
-          reportSubmittedAt: item.report_submitted_at,
-          interactionClosedAt: item.interaction_closed_at,
-          treatmentSummary: item.treatment_summary,
-          medicalReport: item.medical_report,
-          medicines: item.medicines,
-          prescriptions: item.prescriptions,
-          recommendations: item.recommendations,
-          patientReviewSubmitted: item.patient_review_submitted
-        }));
-
-        setAppointments(mapped);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      const data = await response.json();
+      if (!response.ok) {
+        const errorMessage = data.error || 'Failed to load appointments';
+        throw new Error(errorMessage);
       }
-    };
 
+      if (!data.data || !Array.isArray(data.data)) {
+        setAppointments([]);
+        return;
+      }
+
+      const mapped = data.data.map((item) => ({
+        id: item.id,
+        doctor: item.doctor_name || 'Unknown Doctor',
+        specialty: item.doctor_specialty || 'General Practice',
+        date: formatDate(item.appointment_date),
+        time: formatTime(item.appointment_time),
+        status: item.status || 'pending',
+        consultationType: item.consultation_type || 'physical_checkup',
+        videoRoomId: item.video_room_id,
+        reportSubmittedAt: item.report_submitted_at,
+        interactionClosedAt: item.interaction_closed_at,
+        treatmentSummary: item.treatment_summary,
+        medicalReport: item.medical_report,
+        medicines: item.medicines,
+        prescriptions: item.prescriptions,
+        recommendations: item.recommendations,
+        patientReviewSubmitted: item.patient_review_submitted
+      }));
+
+      setAppointments(mapped);
+    } catch (err) {
+      const errorMsg = err.message || 'An unexpected error occurred';
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate, toast]);
+
+  // Auto-refresh when navigating back to this page
+  useEffect(() => {
     loadAppointments();
-  }, [navigate]);
+  }, [loadAppointments, location.key, refreshKey]);
+
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1);
+    toast.info('Refreshing appointments...');
+  };
+
+  const handleJoinVideoCall = (roomId) => {
+    setActiveVideoCall(roomId);
+  };
+
+  const handleEndVideoCall = () => {
+    setActiveVideoCall(null);
+  };
 
   const handleReviewDoctor = async (appointmentId) => {
     const token = localStorage.getItem('token');
@@ -144,9 +172,12 @@ const PatientAppointmentsPage = () => {
         )
       );
 
+      toast.success('Doctor review submitted successfully');
       await maybeSubmitSoftwareReview();
     } catch (err) {
-      setError(err.message);
+      const errorMsg = err.message || 'Failed to submit review';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setReviewingDoctorId(null);
     }
@@ -157,12 +188,37 @@ const PatientAppointmentsPage = () => {
       <PatientSidebar />
       <main className="mc-patient-appointments__content">
         <header className="mc-patient-appointments__header">
-          <h1>Appointments</h1>
-          <p>Track upcoming visits and past consultations.</p>
+          <div className="mc-patient-appointments__header-content">
+            <div>
+              <h1>Appointments</h1>
+              <p>Track upcoming visits and past consultations.</p>
+            </div>
+            <button
+              type="button"
+              className="mc-patient-appointments__refresh-btn"
+              onClick={handleRefresh}
+              disabled={loading}
+              title="Refresh appointments"
+            >
+              {loading ? 'Refreshing...' : '↻ Refresh'}
+            </button>
+          </div>
         </header>
 
         {loading && <div className="mc-patient-appointments__state">Loading appointments...</div>}
-        {error && <div className="mc-patient-appointments__error">{error}</div>}
+        {error && (
+          <div className="mc-patient-appointments__error">
+            <span className="mc-patient-appointments__error-icon">⚠</span>
+            <span>{error}</span>
+            <button 
+              type="button" 
+              className="mc-patient-appointments__error-retry"
+              onClick={handleRefresh}
+            >
+              Retry
+            </button>
+          </div>
+        )}
         {!loading && !error && (
           <section className="mc-patient-appointments__card">
             <div className="mc-patient-appointments__list">
@@ -189,10 +245,10 @@ const PatientAppointmentsPage = () => {
                       {item.status === 'confirmed' && item.consultationType === 'video_consultation' && item.videoRoomId && (
                         <button
                           type="button"
-                          className="mc-patient-appointments__message"
-                          onClick={() => window.open(`https://meet.jit.si/${encodeURIComponent(item.videoRoomId)}`, '_blank', 'noopener,noreferrer')}
+                          className="mc-patient-appointments__btn mc-patient-appointments__btn--video"
+                          onClick={() => handleJoinVideoCall(item.videoRoomId)}
                         >
-                          Join Video Call
+                          📹 Join Video Call
                         </button>
                       )}
                       {!item.interactionClosedAt && (
@@ -245,6 +301,14 @@ const PatientAppointmentsPage = () => {
             interactionClosed={activeInteractionClosed}
             role="patient"
             onClose={() => setActiveAppointmentId(null)}
+          />
+        )}
+
+        {activeVideoCall && (
+          <VideoCallModal
+            roomId={activeVideoCall}
+            role="patient"
+            onClose={handleEndVideoCall}
           />
         )}
       </main>
