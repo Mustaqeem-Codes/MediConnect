@@ -219,16 +219,16 @@ class Appointment {
 
       const query = `
         UPDATE appointments
-        SET status = $1,
+        SET status = $1::varchar,
             video_room_id = CASE
-              WHEN $1 = 'confirmed'
+              WHEN $1::varchar = 'confirmed'
                 AND consultation_type = 'video_consultation'
                 AND (video_room_id IS NULL OR video_room_id = '')
               THEN CONCAT('mc-', id::text, '-', SUBSTR(MD5(RANDOM()::text), 1, 10))
               ELSE video_room_id
             END,
             report_due_at = CASE
-              WHEN $1 = 'completed' AND report_due_at IS NULL
+              WHEN $1::varchar = 'completed' AND report_due_at IS NULL
               THEN (appointment_date::timestamp + appointment_time + INTERVAL '24 hours')
               ELSE report_due_at
             END,
