@@ -33,6 +33,7 @@ const PatientAppointmentsPage = () => {
   const [activeInteractionClosed, setActiveInteractionClosed] = useState(false);
   const [reviewingDoctorId, setReviewingDoctorId] = useState(null);
   const [activeVideoCall, setActiveVideoCall] = useState(null);
+  const [activeVideoAppointmentId, setActiveVideoAppointmentId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const loadAppointments = useCallback(async () => {
@@ -102,12 +103,14 @@ const PatientAppointmentsPage = () => {
     toast.info('Refreshing appointments...');
   };
 
-  const handleJoinVideoCall = (roomId) => {
+  const handleJoinVideoCall = (roomId, appointmentId) => {
     setActiveVideoCall(roomId);
+    setActiveVideoAppointmentId(appointmentId);
   };
 
   const handleEndVideoCall = () => {
     setActiveVideoCall(null);
+    setActiveVideoAppointmentId(null);
   };
 
   const handleReviewDoctor = async (appointmentId) => {
@@ -246,7 +249,7 @@ const PatientAppointmentsPage = () => {
                         <button
                           type="button"
                           className="mc-patient-appointments__btn mc-patient-appointments__btn--video"
-                          onClick={() => handleJoinVideoCall(item.videoRoomId)}
+                          onClick={() => handleJoinVideoCall(item.videoRoomId, item.id)}
                         >
                           📹 Join Video Call
                         </button>
@@ -307,7 +310,7 @@ const PatientAppointmentsPage = () => {
         {activeVideoCall && (
           <VideoCallModal
             roomId={activeVideoCall}
-            role="patient"
+            appointmentId={activeVideoAppointmentId}
             onClose={handleEndVideoCall}
           />
         )}

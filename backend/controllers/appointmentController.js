@@ -275,7 +275,7 @@ const updateAppointmentStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const { id } = req.params;
-    const allowedStatuses = ['pending', 'confirmed', 'rejected', 'cancelled', 'completed'];
+    const allowedStatuses = ['pending', 'confirmed', 'rejected', 'cancelled', 'completed', 'disputed', 'no_show'];
 
     console.log('[updateAppointmentStatus] Request received:', {
       appointmentId: id,
@@ -354,7 +354,11 @@ const submitAppointmentReport = async (req, res) => {
       medical_report,
       medicines,
       prescriptions,
-      recommendations
+      recommendations,
+      diagnosis,
+      medication_array,
+      clinical_findings,
+      patient_instructions
     } = req.body;
 
     if (!treatment_summary || !String(treatment_summary).trim()) {
@@ -376,12 +380,50 @@ const submitAppointmentReport = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Appointment not found' });
     }
 
+    // Check if report is locked (past addendum window)
+    if (appointment.report_locked_at) {
+      return res.status(403).json({
+        success: false,
+        error: 'Report is locked and cannot be modified (addendum window expired)'
+      });
+    }
+
     if (!ALLOWED_CONSULTATION_TYPES.includes(appointment.consultation_type)) {
       return res.status(400).json({
         success: false,
         error: 'Report submission is only supported for physical checkup or video consultation appointments'
       });
     }
+
+    // For video consultations, validate overlap duration
+    if (appointment.consultation_type === 'video_consultation') {
+      const eligibility = await Appointment.canMarkCompleted(id);
+      if (!eligibility.eligible && eligibility.reason === 'Insufficient video overlap (min 3 minutes required)') {
+        return res.status(400).json({
+          success: false,
+          error: 'Cannot complete: Both parties must be present in video call for at least 3 minutes'
+        });
+      }
+    }
+
+    // Validate medication_array structure
+    const validatedMedicationArray = Array.isArray(medication_array)
+      ? medication_array.filter(med => med && med.drug_name).map(med => ({
+          drug_name: String(med.drug_name || '').trim(),
+          dosage: String(med.dosage || '').trim(),
+          frequency: String(med.frequency || '').trim(),
+          duration: String(med.duration || '').trim()
+        }))
+      : [];
+
+    // Validate diagnosis array
+    const validatedDiagnosis = Array.isArray(diagnosis)
+      ? diagnosis.filter(d => d && (d.code || d.name)).map(d => ({
+          code: String(d.code || '').trim(),
+          name: String(d.name || '').trim(),
+          type: d.type || 'custom' // 'icd10' or 'custom'
+        }))
+      : [];
 
     const updated = await Appointment.submitDoctorReport({
       id,
@@ -392,7 +434,11 @@ const submitAppointmentReport = async (req, res) => {
         ? medicines.map((item) => String(item || '').trim()).filter(Boolean)
         : [],
       prescriptions: prescriptions ? String(prescriptions).trim() : null,
-      recommendations: recommendations ? String(recommendations).trim() : null
+      recommendations: recommendations ? String(recommendations).trim() : null,
+      diagnosis: validatedDiagnosis,
+      medication_array: validatedMedicationArray,
+      clinical_findings: clinical_findings ? String(clinical_findings).trim() : null,
+      patient_instructions: patient_instructions ? String(patient_instructions).trim() : null
     });
 
     if (!updated) {
@@ -402,6 +448,9 @@ const submitAppointmentReport = async (req, res) => {
     res.json({ success: true, data: updated });
   } catch (error) {
     console.error('Submit appointment report error:', error);
+    if (error.message === 'Report is locked and cannot be modified') {
+      return res.status(403).json({ success: false, error: error.message });
+    }
     res.status(500).json({ success: false, error: 'Server error' });
   }
 };
@@ -493,6 +542,263 @@ const getFullPatientRecord = async (req, res) => {
   }
 };
 
+// =============== Video Audit Trail Endpoints ===============
+
+// @desc    Record video call join event
+// @route   POST /api/appointments/:id/video/join
+// @access  Private (doctor or patient)
+const recordVideoJoin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: 'Appointment not found' });
+    }
+
+    // Validate user is part of this appointment
+    const role = req.user.role;
+    if (role === 'doctor' && appointment.doctor_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+    if (role === 'patient' && appointment.patient_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    if (appointment.consultation_type !== 'video_consultation') {
+      return res.status(400).json({ success: false, error: 'Not a video consultation' });
+    }
+
+    const updated = await Appointment.recordVideoJoin({
+      id,
+      role,
+      user_id: req.user.id
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Record video join error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Record video call leave event
+// @route   POST /api/appointments/:id/video/leave
+// @access  Private (doctor or patient)
+const recordVideoLeave = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: 'Appointment not found' });
+    }
+
+    const role = req.user.role;
+    if (role === 'doctor' && appointment.doctor_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+    if (role === 'patient' && appointment.patient_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    // Calculate overlap duration when either party leaves
+    await Appointment.calculateOverlapDuration(id);
+
+    const updated = await Appointment.recordVideoLeave({
+      id,
+      role,
+      user_id: req.user.id
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Record video leave error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// =============== Dispute Handling Endpoints ===============
+
+// @desc    Raise a dispute on an appointment (patient reports provider no-show)
+// @route   POST /api/appointments/:id/dispute
+// @access  Private (patient)
+const raiseDispute = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: 'Appointment not found' });
+    }
+
+    if (appointment.patient_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    if (!['confirmed', 'completed'].includes(appointment.status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Disputes can only be raised for confirmed or completed appointments'
+      });
+    }
+
+    const updated = await Appointment.raiseDispute({
+      id,
+      raised_by: 'patient',
+      reason: reason || 'Provider did not show'
+    });
+
+    if (!updated) {
+      return res.status(400).json({ success: false, error: 'Failed to raise dispute' });
+    }
+
+    res.json({ success: true, data: updated, message: 'Dispute raised. Admin will review.' });
+  } catch (error) {
+    console.error('Raise dispute error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Resolve a dispute (admin only)
+// @route   PUT /api/appointments/:id/dispute/resolve
+// @access  Private (admin)
+const resolveDispute = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { resolution } = req.body;
+
+    if (!['provider_favor', 'patient_favor', 'mutual'].includes(resolution)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid resolution. Must be: provider_favor, patient_favor, or mutual'
+      });
+    }
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: 'Appointment not found' });
+    }
+
+    if (appointment.status !== 'disputed') {
+      return res.status(400).json({ success: false, error: 'Appointment is not in disputed status' });
+    }
+
+    const updated = await Appointment.resolveDispute({
+      id,
+      resolution,
+      resolved_by: `admin:${req.user.id}`
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Resolve dispute error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Mark appointment as no-show
+// @route   POST /api/appointments/:id/no-show
+// @access  Private (doctor or system)
+const markNoShow = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { no_show_party } = req.body;
+
+    if (!['provider', 'patient'].includes(no_show_party)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid no_show_party. Must be: provider or patient'
+      });
+    }
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: 'Appointment not found' });
+    }
+
+    // Only doctor can mark patient as no-show
+    if (no_show_party === 'patient' && appointment.doctor_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const updated = await Appointment.markNoShow({ id, no_show_party });
+
+    if (!updated) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot mark as no-show. Ensure appointment is confirmed and the party has not joined.'
+      });
+    }
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Mark no-show error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Get patient medical history for current appointment
+// @route   GET /api/appointments/:id/patient-history
+// @access  Private (doctor)
+const getPatientMedicalHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment || appointment.doctor_id !== req.user.id) {
+      return res.status(404).json({ success: false, error: 'Appointment not found' });
+    }
+
+    if (!['confirmed', 'completed'].includes(appointment.status)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Medical history is available only after appointment acceptance'
+      });
+    }
+
+    const history = await Appointment.getPatientMedicalHistory(appointment.patient_id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('Get patient medical history error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Get video audit log for an appointment (admin)
+// @route   GET /api/appointments/:id/video/audit
+// @access  Private (admin)
+const getVideoAuditLog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, error: 'Appointment not found' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: appointment.id,
+        provider_join_time: appointment.provider_join_time,
+        patient_join_time: appointment.patient_join_time,
+        overlap_duration_seconds: appointment.overlap_duration_seconds,
+        video_audit_log: appointment.video_audit_log,
+        status: appointment.status,
+        dispute_raised_at: appointment.dispute_raised_at,
+        dispute_raised_by: appointment.dispute_raised_by,
+        dispute_resolved_at: appointment.dispute_resolved_at,
+        dispute_resolution: appointment.dispute_resolution
+      }
+    });
+  } catch (error) {
+    console.error('Get video audit log error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
 module.exports = {
   createAppointment,
   getDoctorAvailableSlots,
@@ -503,5 +809,15 @@ module.exports = {
   submitAppointmentReport,
   getLatestPatientRecord,
   requestFullPatientRecordAccess,
-  getFullPatientRecord
+  getFullPatientRecord,
+  // Video audit trail
+  recordVideoJoin,
+  recordVideoLeave,
+  getVideoAuditLog,
+  // Dispute handling
+  raiseDispute,
+  resolveDispute,
+  markNoShow,
+  // Medical history
+  getPatientMedicalHistory
 };

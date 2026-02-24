@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import '../../styles/dashboard/DoctorSidebar.css';
+import mcLogo from '../../assets/MC Logo.png';
 
 const DoctorSidebar = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const DoctorSidebar = () => {
   return (
     <aside className="mc-doctor-sidebar">
       <div className="mc-doctor-sidebar__brand">
-        <span className="mc-doctor-sidebar__logo">MC</span>
+        <img src={mcLogo} alt="MediConnect Logo" className="mc-doctor-sidebar__logo" />
         <div>
           <p className="mc-doctor-sidebar__title">MediConnect</p>
           <p className="mc-doctor-sidebar__subtitle">Doctor Portal</p>

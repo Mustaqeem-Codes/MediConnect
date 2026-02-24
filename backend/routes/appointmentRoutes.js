@@ -12,7 +12,14 @@ const {
   submitAppointmentReport,
   getLatestPatientRecord,
   requestFullPatientRecordAccess,
-  getFullPatientRecord
+  getFullPatientRecord,
+  recordVideoJoin,
+  recordVideoLeave,
+  getVideoAuditLog,
+  raiseDispute,
+  resolveDispute,
+  markNoShow,
+  getPatientMedicalHistory
 } = require('../controllers/appointmentController');
 
 // @route   GET /api/appointments/doctor/:doctorId/slots?date=YYYY-MM-DD
@@ -64,5 +71,46 @@ router.post('/:id/patient-record/request-access', protect, authorize('doctor'), 
 // @desc    Get full patient record history (if access approved)
 // @access  Private (doctor)
 router.get('/:id/patient-record/full', protect, authorize('doctor'), getFullPatientRecord);
+
+// ============ Video Audit Trail Routes ============
+
+// @route   POST /api/appointments/:id/video/join
+// @desc    Record video call join event
+// @access  Private (doctor or patient)
+router.post('/:id/video/join', protect, authorize('doctor', 'patient'), recordVideoJoin);
+
+// @route   POST /api/appointments/:id/video/leave
+// @desc    Record video call leave event
+// @access  Private (doctor or patient)
+router.post('/:id/video/leave', protect, authorize('doctor', 'patient'), recordVideoLeave);
+
+// @route   GET /api/appointments/:id/video/audit
+// @desc    Get video audit log (admin only)
+// @access  Private (admin)
+router.get('/:id/video/audit', protect, authorize('admin'), getVideoAuditLog);
+
+// ============ Dispute Handling Routes ============
+
+// @route   POST /api/appointments/:id/dispute
+// @desc    Raise a dispute on an appointment
+// @access  Private (patient)
+router.post('/:id/dispute', protect, authorize('patient'), raiseDispute);
+
+// @route   PUT /api/appointments/:id/dispute/resolve
+// @desc    Resolve a dispute (admin only)
+// @access  Private (admin)
+router.put('/:id/dispute/resolve', protect, authorize('admin'), resolveDispute);
+
+// @route   POST /api/appointments/:id/no-show
+// @desc    Mark appointment as no-show
+// @access  Private (doctor)
+router.post('/:id/no-show', protect, authorize('doctor'), markNoShow);
+
+// ============ Medical History Routes ============
+
+// @route   GET /api/appointments/:id/patient-history
+// @desc    Get patient medical history for current appointment
+// @access  Private (doctor)
+router.get('/:id/patient-history', protect, authorize('doctor'), getPatientMedicalHistory);
 
 module.exports = router;

@@ -273,3 +273,241 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* EHR Extended Modal Styles */
+.mc-report-modal--ehr {
+  max-width: 800px;
+}
+
+.mc-report-modal__tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 0 1rem;
+}
+
+.mc-report-modal__tab {
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.mc-report-modal__tab:hover {
+  color: #374151;
+}
+
+.mc-report-modal__tab.active {
+  color: #3b82f6;
+}
+
+.mc-report-modal__tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #3b82f6;
+}
+
+.mc-report-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mc-report-modal__section h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Tags (Diagnosis) */
+.mc-report-modal__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mc-report-modal__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  color: #1d4ed8;
+}
+
+.mc-report-modal__tag-code {
+  font-weight: 600;
+  background: #dbeafe;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.mc-report-modal__tag button {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  margin-left: 0.25rem;
+}
+
+.mc-report-modal__tag button:hover {
+  color: #1d4ed8;
+}
+
+/* Dropdown for diagnosis search */
+.mc-report-modal__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mc-report-modal__dropdown-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  transition: background 0.15s;
+}
+
+.mc-report-modal__dropdown-item:hover {
+  background: #f3f4f6;
+}
+
+.mc-report-modal__dropdown-item strong {
+  color: #1d4ed8;
+}
+
+.mc-report-modal__field {
+  position: relative;
+}
+
+.mc-report-modal__field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mc-report-modal__field--inline input {
+  flex: 1;
+}
+
+/* Medication rows */
+.mc-report-modal__medication-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.mc-report-modal__medication-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1fr;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.mc-report-modal__medication-grid input,
+.mc-report-modal__medication-grid select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.mc-report-modal__medication-grid select {
+  background: #fff;
+}
+
+.mc-report-modal__medication-remove {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.mc-report-modal__btn--secondary {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.mc-report-modal__btn--secondary:hover {
+  background: #e5e7eb;
+}
+
+.mc-report-modal__btn--secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mc-report-modal__label-hint {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-left: 0.5rem;
+}
+
+.mc-report-modal__footer-note {
+  padding: 0.75rem 1.5rem;
+  background: #fef3c7;
+  font-size: 0.8125rem;
+  color: #92400e;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mc-report-modal--ehr {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .mc-report-modal__tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mc-report-modal__tab {
+    white-space: nowrap;
+  }
+
+  .mc-report-modal__medication-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

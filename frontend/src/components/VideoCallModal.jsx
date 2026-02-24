@@ -1,12 +1,54 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { API_BASE_URL } from '../config/api';
 import '../styles/VideoCallModal.css';
 
-const VideoCallModal = ({ roomId, onClose }) => {
+const VideoCallModal = ({ roomId, appointmentId, onClose }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const hasJoined = useRef(false);
 
   const jitsiUrl = `https://meet.jit.si/${encodeURIComponent(roomId)}`;
+
+  // Record video join event
+  useEffect(() => {
+    const recordJoin = async () => {
+      if (hasJoined.current || !appointmentId) return;
+      hasJoined.current = true;
+      
+      const token = localStorage.getItem('token');
+      try {
+        await fetch(`${API_BASE_URL}/api/appointments/${appointmentId}/video/join`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+        console.log('[VideoCall] Join event recorded');
+      } catch (err) {
+        console.error('[VideoCall] Failed to record join:', err);
+      }
+    };
+
+    recordJoin();
+
+    // Record leave event on unmount
+    return () => {
+      if (appointmentId && hasJoined.current) {
+        const token = localStorage.getItem('token');
+        fetch(`${API_BASE_URL}/api/appointments/${appointmentId}/video/leave`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        }).catch(err => {
+          console.error('[VideoCall] Failed to record leave:', err);
+        });
+      }
+    };
+  }, [appointmentId]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -32,6 +74,25 @@ const VideoCallModal = ({ roomId, onClose }) => {
 
   const handleOpenNewTab = () => {
     window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleEndCall = async () => {
+    // Record leave before closing
+    if (appointmentId && hasJoined.current) {
+      const token = localStorage.getItem('token');
+      try {
+        await fetch(`${API_BASE_URL}/api/appointments/${appointmentId}/video/leave`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+      } catch (err) {
+        console.error('[VideoCall] Failed to record leave:', err);
+      }
+    }
+    onClose();
   };
 
   if (isMinimized) {
@@ -79,7 +140,7 @@ const VideoCallModal = ({ roomId, onClose }) => {
             <button
               type="button"
               className="mc-video-call-modal__btn mc-video-call-modal__btn--close"
-              onClick={onClose}
+              onClick={handleEndCall}
               title="End call"
             >
               End Call

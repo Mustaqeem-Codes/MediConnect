@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import '../../styles/dashboard/PatientSidebar.css';
 import { API_BASE_URL } from '../../config/api';
+import mcLogo from '../../assets/MC Logo.png';
 
 const PatientSidebar = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const PatientSidebar = () => {
   return (
     <aside className="mc-patient-sidebar">
       <div className="mc-patient-sidebar__brand">
-        <span className="mc-patient-sidebar__logo">MC</span>
+        <img src={mcLogo} alt="MediConnect Logo" className="mc-patient-sidebar__logo" />
         <div>
           <p className="mc-patient-sidebar__title">MediConnect</p>
           <p className="mc-patient-sidebar__subtitle">Patient Portal</p>

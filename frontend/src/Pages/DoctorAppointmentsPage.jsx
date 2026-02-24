@@ -36,6 +36,7 @@ const DoctorAppointmentsPage = () => {
   const [requestingFullRecordId, setRequestingFullRecordId] = useState(null);
   const [reviewingPatientId, setReviewingPatientId] = useState(null);
   const [activeVideoCall, setActiveVideoCall] = useState(null);
+  const [activeVideoAppointmentId, setActiveVideoAppointmentId] = useState(null);
   const [reportModalData, setReportModalData] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -298,12 +299,14 @@ const DoctorAppointmentsPage = () => {
     }
   };
 
-  const handleJoinVideoCall = (roomId) => {
+  const handleJoinVideoCall = (roomId, appointmentId) => {
     setActiveVideoCall(roomId);
+    setActiveVideoAppointmentId(appointmentId);
   };
 
   const handleEndVideoCall = () => {
     setActiveVideoCall(null);
+    setActiveVideoAppointmentId(null);
   };
 
   const handleReviewPatient = async (appointmentId) => {
@@ -464,7 +467,7 @@ const DoctorAppointmentsPage = () => {
                       <button
                         type="button"
                         className="mc-doctor-appointments__btn mc-doctor-appointments__btn--video"
-                        onClick={() => handleJoinVideoCall(item.videoRoomId)}
+                        onClick={() => handleJoinVideoCall(item.videoRoomId, item.id)}
                       >
                         📹 Join Video Call
                       </button>
@@ -575,6 +578,7 @@ const DoctorAppointmentsPage = () => {
           <VideoCallModal
             roomId={activeVideoCall}
             role="doctor"
+            appointmentId={activeVideoAppointmentId}
             onClose={handleEndVideoCall}
           />
         )}

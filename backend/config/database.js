@@ -149,6 +149,28 @@ const createTables = async () => {
     await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS interaction_closed_at TIMESTAMP');
     await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'");
 
+    // ============ EHR Structured Fields ============
+    await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS diagnosis JSONB DEFAULT '[]'::jsonb");
+    await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS medication_array JSONB DEFAULT '[]'::jsonb");
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS clinical_findings TEXT');
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS patient_instructions TEXT');
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS report_locked_at TIMESTAMP');
+
+    // ============ Video Audit Trail Fields ============
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS provider_join_time TIMESTAMP');
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS patient_join_time TIMESTAMP');
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS overlap_duration_seconds INTEGER DEFAULT 0');
+    await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS video_audit_log JSONB DEFAULT '[]'::jsonb");
+
+    // ============ Dispute/Status Fields ============
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS dispute_raised_at TIMESTAMP');
+    await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS dispute_raised_by VARCHAR(20)");
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS dispute_resolved_at TIMESTAMP');
+    await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS dispute_resolution VARCHAR(20)");
+
+    // ============ Hour Sequence (FCFS Queue) ============
+    await pool.query('ALTER TABLE appointments ADD COLUMN IF NOT EXISTS hour_sequence_id INTEGER');
+
     // Messages table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS messages (

@@ -1,0 +1,2 @@
+[   94990ms] [ERROR] Access to fetch at 'https://boiling-castle-48331-f3515ddab195.herokuapp.com/api/patients/login' from origin 'http://localhost:5175' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:5175/login?role=patient:0
+[   94992ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://boiling-castle-48331-f3515ddab195.herokuapp.com/api/patients/login:0

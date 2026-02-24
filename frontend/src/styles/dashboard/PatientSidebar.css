@@ -18,11 +18,9 @@
 .mc-patient-sidebar__logo {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
-  background: #1E88E5;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
+  border-radius: 10px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .mc-patient-sidebar__title {

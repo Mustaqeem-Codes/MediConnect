@@ -1,6 +1,12 @@
 // backend/models/Appointment.js
 const { pool } = require('../config/database');
 
+// Constants for Clinical Load Units
+const HOUR_CAPACITY_UNITS = 6; // 6 units per hour = 60 minutes
+const UNIT_MINUTES = 10; // 1 unit = 10 minutes
+const ADDENDUM_WINDOW_HOURS = 2; // 2-hour window before report locks
+const MIN_OVERLAP_SECONDS = 180; // 3 minutes minimum for valid encounter
+
 class Appointment {
   static async create({
     patient_id,
@@ -12,6 +18,19 @@ class Appointment {
     appointment_type,
     duration_units
   }) {
+    // Calculate hour_sequence_id (FCFS queue position within the hour)
+    const hour = String(appointment_time).slice(0, 2);
+    const seqQuery = `
+      SELECT COALESCE(MAX(hour_sequence_id), 0) + 1 AS next_seq
+      FROM appointments
+      WHERE doctor_id = $1
+        AND appointment_date = $2
+        AND EXTRACT(HOUR FROM appointment_time) = $3
+        AND status IN ('pending', 'confirmed')
+    `;
+    const seqResult = await pool.query(seqQuery, [doctor_id, appointment_date, parseInt(hour, 10)]);
+    const hourSequenceId = seqResult.rows[0]?.next_seq || 1;
+
     const query = `
       INSERT INTO appointments (
         patient_id,
@@ -21,11 +40,12 @@ class Appointment {
         reason,
         consultation_type,
         appointment_type,
-        duration_units
+        duration_units,
+        hour_sequence_id
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
-                consultation_type, appointment_type, duration_units, video_room_id,
+                consultation_type, appointment_type, duration_units, hour_sequence_id, video_room_id,
                 status, reason, report_due_at, report_submitted_at, interaction_closed_at, created_at
     `;
     const values = [
@@ -36,7 +56,8 @@ class Appointment {
       reason || null,
       consultation_type || 'physical_checkup',
       appointment_type || null,
-      Number.isInteger(duration_units) ? duration_units : 2
+      Number.isInteger(duration_units) ? duration_units : 2,
+      hourSequenceId
     ];
     const result = await pool.query(query, values);
     return result.rows[0];
@@ -45,9 +66,12 @@ class Appointment {
   static async findByPatientId(patient_id) {
     const query = `
       SELECT a.id, a.global_sequence_id, a.patient_id, a.doctor_id, a.appointment_date, a.appointment_time,
-              a.consultation_type, a.appointment_type, a.duration_units, a.video_room_id, a.status, a.reason,
+              a.consultation_type, a.appointment_type, a.duration_units, a.hour_sequence_id,
+              a.video_room_id, a.status, a.reason,
               a.treatment_summary, a.medical_report, a.medicines, a.prescriptions, a.recommendations,
+              a.diagnosis, a.medication_array, a.patient_instructions,
               a.report_due_at, a.report_submitted_at, a.reminder_sent_at, a.interaction_closed_at,
+              a.dispute_raised_at, a.dispute_raised_by, a.dispute_resolved_at, a.dispute_resolution,
              a.created_at,
              (pr.id IS NOT NULL) AS patient_review_submitted,
              d.name AS doctor_name, d.specialty AS doctor_specialty
@@ -68,18 +92,15 @@ class Appointment {
   static async findByDoctorId(doctor_id) {
     const query = `
       SELECT a.id, a.global_sequence_id, a.patient_id, a.doctor_id, a.appointment_date, a.appointment_time,
-              a.consultation_type, a.appointment_type, a.duration_units, a.video_room_id, a.status, a.reason,
+              a.consultation_type, a.appointment_type, a.duration_units, a.hour_sequence_id,
+              a.video_room_id, a.status, a.reason,
               a.treatment_summary, a.medical_report, a.medicines, a.prescriptions, a.recommendations,
-              a.report_due_at, a.report_submitted_at, a.reminder_sent_at, a.interaction_closed_at,
+              a.diagnosis, a.medication_array, a.clinical_findings, a.patient_instructions,
+              a.report_due_at, a.report_submitted_at, a.report_locked_at, a.reminder_sent_at, a.interaction_closed_at,
+              a.provider_join_time, a.patient_join_time, a.overlap_duration_seconds,
+              a.dispute_raised_at, a.dispute_raised_by, a.dispute_resolved_at, a.dispute_resolution,
               a.created_at,
              (dr.id IS NOT NULL) AS doctor_review_submitted,
-             latest.id AS latest_record_appointment_id,
-             latest.treatment_summary AS latest_treatment_summary,
-             latest.medical_report AS latest_medical_report,
-             latest.medicines AS latest_medicines,
-             latest.prescriptions AS latest_prescriptions,
-             latest.recommendations AS latest_recommendations,
-             latest.report_submitted_at AS latest_report_submitted_at,
              p.name AS patient_name, p.phone AS patient_phone
       FROM appointments a
       JOIN patients p ON p.id = a.patient_id
@@ -88,14 +109,6 @@ class Appointment {
        AND dr.reviewer_role = 'doctor'
        AND dr.reviewer_id = a.doctor_id
        AND dr.reviewee_role = 'patient'
-      LEFT JOIN LATERAL (
-        SELECT ar.id, ar.treatment_summary, ar.medical_report, ar.medicines, ar.prescriptions, ar.recommendations, ar.report_submitted_at
-        FROM appointments ar
-        WHERE ar.patient_id = a.patient_id
-          AND ar.report_submitted_at IS NOT NULL
-        ORDER BY ar.report_submitted_at DESC
-        LIMIT 1
-      ) latest ON true
       WHERE a.doctor_id = $1
       ORDER BY CASE WHEN a.status IN ('pending', 'confirmed') THEN 0 ELSE 1 END,
                a.global_sequence_id ASC
@@ -104,12 +117,35 @@ class Appointment {
     return result.rows;
   }
 
+  // Get full medical history for a patient (for doctor view during appointment)
+  static async getPatientMedicalHistory(patient_id) {
+    const query = `
+      SELECT a.id, a.appointment_date, a.appointment_time, a.consultation_type,
+             a.diagnosis, a.medication_array, a.treatment_summary, a.medical_report,
+             a.clinical_findings, a.patient_instructions, a.medicines, a.prescriptions, a.recommendations,
+             a.report_submitted_at,
+             d.name AS doctor_name, d.specialty AS doctor_specialty
+      FROM appointments a
+      JOIN doctors d ON d.id = a.doctor_id
+      WHERE a.patient_id = $1
+        AND a.report_submitted_at IS NOT NULL
+        AND a.status = 'completed'
+      ORDER BY a.report_submitted_at DESC
+    `;
+    const result = await pool.query(query, [patient_id]);
+    return result.rows;
+  }
+
   static async findById(id) {
     const query = `
       SELECT id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
-              consultation_type, appointment_type, duration_units, video_room_id, status, reason,
+              consultation_type, appointment_type, duration_units, hour_sequence_id,
+              video_room_id, status, reason,
               treatment_summary, medical_report, medicines, prescriptions, recommendations,
-              report_due_at, report_submitted_at, reminder_sent_at, interaction_closed_at,
+              diagnosis, medication_array, clinical_findings, patient_instructions,
+              report_due_at, report_submitted_at, report_locked_at, reminder_sent_at, interaction_closed_at,
+              provider_join_time, patient_join_time, overlap_duration_seconds, video_audit_log,
+              dispute_raised_at, dispute_raised_by, dispute_resolved_at, dispute_resolution,
               created_at, updated_at
       FROM appointments
       WHERE id = $1
@@ -266,8 +302,21 @@ class Appointment {
     medical_report,
     medicines,
     prescriptions,
-    recommendations
+    recommendations,
+    diagnosis,
+    medication_array,
+    clinical_findings,
+    patient_instructions
   }) {
+    // Check if report is already locked
+    const lockCheck = await pool.query(
+      `SELECT report_locked_at FROM appointments WHERE id = $1 AND doctor_id = $2`,
+      [id, doctor_id]
+    );
+    if (lockCheck.rows[0]?.report_locked_at) {
+      throw new Error('Report is locked and cannot be modified');
+    }
+
     const query = `
       UPDATE appointments
       SET treatment_summary = $1,
@@ -275,16 +324,27 @@ class Appointment {
           medicines = $3::jsonb,
           prescriptions = $4,
           recommendations = $5,
-          report_submitted_at = CURRENT_TIMESTAMP,
+          diagnosis = $6::jsonb,
+          medication_array = $7::jsonb,
+          clinical_findings = $8,
+          patient_instructions = $9,
+          report_submitted_at = COALESCE(report_submitted_at, CURRENT_TIMESTAMP),
+          report_locked_at = CASE 
+            WHEN report_submitted_at IS NOT NULL 
+              AND report_submitted_at + INTERVAL '${ADDENDUM_WINDOW_HOURS} hours' <= CURRENT_TIMESTAMP
+            THEN CURRENT_TIMESTAMP
+            ELSE report_locked_at
+          END,
           interaction_closed_at = CURRENT_TIMESTAMP,
           status = 'completed',
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $6 AND doctor_id = $7
+      WHERE id = $10 AND doctor_id = $11
       RETURNING id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
                 consultation_type, appointment_type, duration_units, video_room_id,
                 status, reason,
                 treatment_summary, medical_report, medicines, prescriptions, recommendations,
-                report_due_at, report_submitted_at, reminder_sent_at, interaction_closed_at, updated_at
+                diagnosis, medication_array, clinical_findings, patient_instructions,
+                report_due_at, report_submitted_at, report_locked_at, reminder_sent_at, interaction_closed_at, updated_at
     `;
     const values = [
       treatment_summary,
@@ -292,11 +352,186 @@ class Appointment {
       JSON.stringify(Array.isArray(medicines) ? medicines : []),
       prescriptions || null,
       recommendations || null,
+      JSON.stringify(Array.isArray(diagnosis) ? diagnosis : []),
+      JSON.stringify(Array.isArray(medication_array) ? medication_array : []),
+      clinical_findings || null,
+      patient_instructions || null,
       id,
       doctor_id
     ];
     const result = await pool.query(query, values);
     return result.rows[0];
+  }
+
+  // Check and lock reports past addendum window
+  static async lockExpiredReports() {
+    const query = `
+      UPDATE appointments
+      SET report_locked_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE report_submitted_at IS NOT NULL
+        AND report_locked_at IS NULL
+        AND report_submitted_at + INTERVAL '${ADDENDUM_WINDOW_HOURS} hours' <= CURRENT_TIMESTAMP
+      RETURNING id
+    `;
+    const result = await pool.query(query);
+    return result.rows;
+  }
+
+  // =============== Video Audit Trail Methods ===============
+
+  static async recordVideoJoin({ id, role, user_id }) {
+    const column = role === 'doctor' ? 'provider_join_time' : 'patient_join_time';
+    const query = `
+      UPDATE appointments
+      SET ${column} = COALESCE(${column}, CURRENT_TIMESTAMP),
+          video_audit_log = video_audit_log || $1::jsonb,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, provider_join_time, patient_join_time, video_audit_log
+    `;
+    const logEntry = JSON.stringify([{
+      event: 'join',
+      role,
+      user_id,
+      timestamp: new Date().toISOString()
+    }]);
+    const result = await pool.query(query, [logEntry, id]);
+    return result.rows[0];
+  }
+
+  static async recordVideoLeave({ id, role, user_id }) {
+    const query = `
+      UPDATE appointments
+      SET video_audit_log = video_audit_log || $1::jsonb,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, video_audit_log
+    `;
+    const logEntry = JSON.stringify([{
+      event: 'leave',
+      role,
+      user_id,
+      timestamp: new Date().toISOString()
+    }]);
+    const result = await pool.query(query, [logEntry, id]);
+    return result.rows[0];
+  }
+
+  static async calculateOverlapDuration(id) {
+    const query = `
+      UPDATE appointments
+      SET overlap_duration_seconds = CASE
+            WHEN provider_join_time IS NOT NULL AND patient_join_time IS NOT NULL
+            THEN GREATEST(0, EXTRACT(EPOCH FROM (
+              LEAST(CURRENT_TIMESTAMP, interaction_closed_at, CURRENT_TIMESTAMP) - 
+              GREATEST(provider_join_time, patient_join_time)
+            ))::int)
+            ELSE 0
+          END,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, overlap_duration_seconds, provider_join_time, patient_join_time
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+  }
+
+  // =============== Professional Status & Dispute Logic ===============
+
+  static async raiseDispute({ id, raised_by, reason }) {
+    const query = `
+      UPDATE appointments
+      SET status = 'disputed',
+          dispute_raised_at = CURRENT_TIMESTAMP,
+          dispute_raised_by = $1::varchar,
+          video_audit_log = video_audit_log || $2::jsonb,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+        AND status IN ('confirmed', 'completed')
+      RETURNING id, status, dispute_raised_at, dispute_raised_by
+    `;
+    const logEntry = JSON.stringify([{
+      event: 'dispute_raised',
+      raised_by,
+      reason,
+      timestamp: new Date().toISOString()
+    }]);
+    const result = await pool.query(query, [raised_by, logEntry, id]);
+    return result.rows[0];
+  }
+
+  static async resolveDispute({ id, resolution, resolved_by }) {
+    const newStatus = resolution === 'provider_favor' ? 'completed' : 
+                      resolution === 'patient_favor' ? 'cancelled' : 'completed';
+    const query = `
+      UPDATE appointments
+      SET status = $1::varchar,
+          dispute_resolved_at = CURRENT_TIMESTAMP,
+          dispute_resolution = $2::varchar,
+          video_audit_log = video_audit_log || $3::jsonb,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $4
+        AND status = 'disputed'
+      RETURNING id, status, dispute_resolved_at, dispute_resolution
+    `;
+    const logEntry = JSON.stringify([{
+      event: 'dispute_resolved',
+      resolution,
+      resolved_by,
+      timestamp: new Date().toISOString()
+    }]);
+    const result = await pool.query(query, [newStatus, resolution, logEntry, id]);
+    return result.rows[0];
+  }
+
+  static async markNoShow({ id, no_show_party }) {
+    // Check if either party never joined within 15 minutes
+    const query = `
+      UPDATE appointments
+      SET status = 'no_show',
+          video_audit_log = video_audit_log || $1::jsonb,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+        AND status = 'confirmed'
+        AND (
+          (provider_join_time IS NULL AND $3 = 'provider')
+          OR (patient_join_time IS NULL AND $3 = 'patient')
+        )
+      RETURNING id, status
+    `;
+    const logEntry = JSON.stringify([{
+      event: 'no_show',
+      party: no_show_party,
+      timestamp: new Date().toISOString()
+    }]);
+    const result = await pool.query(query, [logEntry, id, no_show_party]);
+    return result.rows[0];
+  }
+
+  // Validate completion eligibility (report submitted + valid overlap)
+  static async canMarkCompleted(id) {
+    const query = `
+      SELECT id, 
+             report_submitted_at IS NOT NULL AS has_report,
+             overlap_duration_seconds >= ${MIN_OVERLAP_SECONDS} AS has_valid_overlap,
+             consultation_type
+      FROM appointments
+      WHERE id = $1
+    `;
+    const result = await pool.query(query, [id]);
+    const row = result.rows[0];
+    if (!row) return { eligible: false, reason: 'Appointment not found' };
+    
+    // Physical checkups don't need video overlap
+    if (row.consultation_type === 'physical_checkup') {
+      return { eligible: row.has_report, reason: row.has_report ? null : 'Report not submitted' };
+    }
+    
+    // Video consultations need both report and valid overlap
+    if (!row.has_report) return { eligible: false, reason: 'Report not submitted' };
+    if (!row.has_valid_overlap) return { eligible: false, reason: 'Insufficient video overlap (min 3 minutes required)' };
+    return { eligible: true, reason: null };
   }
 
   static async findReportPendingPastDue() {
