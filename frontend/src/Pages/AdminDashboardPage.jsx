@@ -125,6 +125,39 @@ const AdminDashboardPage = () => {
     }
   };
 
+  const handleClearAllData = async () => {
+    const confirmed = window.confirm(
+      'WARNING: This will permanently delete ALL data including:\n\n' +
+      '- All doctors\n' +
+      '- All patients\n' +
+      '- All appointments\n' +
+      '- All messages\n' +
+      '- All reviews\n\n' +
+      'This action cannot be undone. Are you sure?'
+    );
+    if (!confirmed) return;
+
+    const doubleConfirm = window.confirm('Are you absolutely sure? Type OK to confirm.');
+    if (!doubleConfirm) return;
+
+    setActionLoading('clear-all');
+    setError('');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/clear-all-data`, {
+        method: 'DELETE',
+        headers: authHeaders
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to clear data');
+      alert(data.message || 'All data cleared successfully!');
+      await loadData();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setActionLoading('');
+    }
+  };
+
   return (
     <div className="mc-admin">
       <header className="mc-admin__header">
@@ -158,6 +191,21 @@ const AdminDashboardPage = () => {
               <h3>Pending Verification</h3>
               <p>{overview.pending_doctor_approvals}</p>
             </article>
+          </section>
+
+          <section className="mc-admin__panel mc-admin__panel--danger">
+            <h2>🔥 Danger Zone</h2>
+            <p style={{ marginBottom: '1rem', color: '#666' }}>
+              Clear all data to start fresh for testing. This will delete all doctors, patients, appointments, and related data.
+            </p>
+            <button
+              type="button"
+              className="mc-admin__btn--danger"
+              disabled={actionLoading === 'clear-all'}
+              onClick={handleClearAllData}
+            >
+              {actionLoading === 'clear-all' ? 'Clearing...' : '🗑️ Clear All Data'}
+            </button>
           </section>
 
           <section className="mc-admin__panel">

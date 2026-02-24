@@ -72,6 +72,25 @@
   color: var(--text-light, #2D3A5E);
 }
 
+.mc-doctor-appointments__type {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  margin: 0.3rem 0;
+}
+
+.mc-doctor-appointments__type--video {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.mc-doctor-appointments__type--physical {
+  background: #dcfce7;
+  color: #166534;
+}
+
 .mc-doctor-appointments__time {
   display: grid;
   text-align: right;

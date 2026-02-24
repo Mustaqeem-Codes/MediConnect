@@ -1,6 +1,7 @@
 // backend/config/database.js
 const { Pool } = require('pg');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 // Create connection pool (support Heroku DATABASE_URL or local env vars)
 const connectionString = process.env.DATABASE_URL;
@@ -15,7 +16,7 @@ const pool = new Pool(
       }
     : {
         user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
+        password: String(process.env.DB_PASSWORD || ''),
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         database: process.env.DB_NAME,

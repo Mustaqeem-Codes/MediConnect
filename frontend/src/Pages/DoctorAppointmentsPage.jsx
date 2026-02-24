@@ -429,6 +429,9 @@ const DoctorAppointmentsPage = () => {
                   <div>
                     <p className="mc-doctor-appointments__name">{item.patient}</p>
                     <span className="mc-doctor-appointments__meta">{item.specialty}</span>
+                    <span className={`mc-doctor-appointments__type mc-doctor-appointments__type--${item.consultationType === 'video_consultation' ? 'video' : 'physical'}`}>
+                      {item.consultationType === 'video_consultation' ? '📹 Video Consultation' : '🏥 Physical Checkup'}
+                    </span>
                     <span className="mc-doctor-appointments__meta">
                       Queue #{item.globalSequenceId ?? '—'} · Duration {Number(item.durationUnits || 0) * 10} min
                     </span>

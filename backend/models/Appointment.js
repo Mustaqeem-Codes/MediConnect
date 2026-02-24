@@ -187,30 +187,67 @@ class Appointment {
   }
 
   static async updateStatus({ id, doctor_id, status }) {
-    const query = `
-      UPDATE appointments
-      SET status = $1,
-          video_room_id = CASE
-            WHEN $1 = 'confirmed'
-              AND consultation_type = 'video_consultation'
-              AND (video_room_id IS NULL OR video_room_id = '')
-            THEN CONCAT('mc-', id::text, '-', SUBSTR(MD5(RANDOM()::text), 1, 10))
-            ELSE video_room_id
-          END,
-          report_due_at = CASE
-            WHEN $1 = 'completed' AND report_due_at IS NULL
-            THEN (appointment_date::timestamp + appointment_time + INTERVAL '24 hours')
-            ELSE report_due_at
-          END,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2 AND doctor_id = $3
-      RETURNING id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
-                consultation_type, appointment_type, duration_units, video_room_id,
-                status, reason, report_due_at, report_submitted_at,
-                reminder_sent_at, interaction_closed_at, updated_at
-    `;
-    const result = await pool.query(query, [status, id, doctor_id]);
-    return result.rows[0];
+    console.log('[Appointment.updateStatus] Starting with params:', { id, doctor_id, status });
+    
+    try {
+      // First verify the appointment exists
+      const checkQuery = `SELECT id, doctor_id, status, consultation_type FROM appointments WHERE id = $1`;
+      const checkResult = await pool.query(checkQuery, [id]);
+      console.log('[Appointment.updateStatus] Existing appointment:', checkResult.rows[0]);
+
+      if (!checkResult.rows[0]) {
+        console.log('[Appointment.updateStatus] No appointment found with id:', id);
+        return null;
+      }
+
+      if (checkResult.rows[0].doctor_id !== doctor_id) {
+        console.log('[Appointment.updateStatus] Doctor ID mismatch:', {
+          appointmentDoctorId: checkResult.rows[0].doctor_id,
+          requestingDoctorId: doctor_id
+        });
+        return null;
+      }
+
+      const query = `
+        UPDATE appointments
+        SET status = $1,
+            video_room_id = CASE
+              WHEN $1 = 'confirmed'
+                AND consultation_type = 'video_consultation'
+                AND (video_room_id IS NULL OR video_room_id = '')
+              THEN CONCAT('mc-', id::text, '-', SUBSTR(MD5(RANDOM()::text), 1, 10))
+              ELSE video_room_id
+            END,
+            report_due_at = CASE
+              WHEN $1 = 'completed' AND report_due_at IS NULL
+              THEN (appointment_date::timestamp + appointment_time + INTERVAL '24 hours')
+              ELSE report_due_at
+            END,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2 AND doctor_id = $3
+        RETURNING id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
+                  consultation_type, appointment_type, duration_units, video_room_id,
+                  status, reason, report_due_at, report_submitted_at,
+                  reminder_sent_at, interaction_closed_at, updated_at
+      `;
+      
+      console.log('[Appointment.updateStatus] Executing update query');
+      const result = await pool.query(query, [status, id, doctor_id]);
+      console.log('[Appointment.updateStatus] Query result rows:', result.rows.length);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('[Appointment.updateStatus] Database error:', {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        constraint: error.constraint,
+        table: error.table,
+        column: error.column,
+        stack: error.stack
+      });
+      throw error;
+    }
   }
 
   static async submitDoctorReport({

@@ -218,6 +218,36 @@ const setPatientBlocked = async (req, res) => {
   }
 };
 
+const clearAllData = async (req, res) => {
+  try {
+    // Delete in order to respect foreign key constraints
+    await pool.query('DELETE FROM notifications');
+    await pool.query('DELETE FROM reviews');
+    await pool.query('DELETE FROM medical_record_access_requests');
+    await pool.query('DELETE FROM messages');
+    await pool.query('DELETE FROM appointments');
+    await pool.query('DELETE FROM patients');
+    await pool.query('DELETE FROM doctors');
+    // Reset sequences
+    await pool.query("ALTER SEQUENCE IF EXISTS appointments_global_sequence RESTART WITH 1");
+    await pool.query("ALTER SEQUENCE IF EXISTS appointments_id_seq RESTART WITH 1");
+    await pool.query("ALTER SEQUENCE IF EXISTS patients_id_seq RESTART WITH 1");
+    await pool.query("ALTER SEQUENCE IF EXISTS doctors_id_seq RESTART WITH 1");
+    await pool.query("ALTER SEQUENCE IF EXISTS messages_id_seq RESTART WITH 1");
+    await pool.query("ALTER SEQUENCE IF EXISTS reviews_id_seq RESTART WITH 1");
+    await pool.query("ALTER SEQUENCE IF EXISTS notifications_id_seq RESTART WITH 1");
+    await pool.query("ALTER SEQUENCE IF EXISTS medical_record_access_requests_id_seq RESTART WITH 1");
+
+    res.json({
+      success: true,
+      message: 'All data has been cleared. You can now register new accounts for testing.'
+    });
+  } catch (error) {
+    console.error('Admin clear data error:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
 module.exports = {
   loginAdmin,
   getOverview,
@@ -225,5 +255,6 @@ module.exports = {
   listPatientsForAdmin,
   setDoctorVerification,
   setDoctorBlocked,
-  setPatientBlocked
+  setPatientBlocked,
+  clearAllData
 };

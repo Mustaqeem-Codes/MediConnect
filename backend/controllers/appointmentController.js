@@ -277,7 +277,15 @@ const updateAppointmentStatus = async (req, res) => {
     const { id } = req.params;
     const allowedStatuses = ['pending', 'confirmed', 'rejected', 'cancelled', 'completed'];
 
+    console.log('[updateAppointmentStatus] Request received:', {
+      appointmentId: id,
+      requestedStatus: status,
+      doctorId: req.user?.id,
+      userId: req.user
+    });
+
     if (!status) {
+      console.log('[updateAppointmentStatus] Error: Status is required');
       return res.status(400).json({
         success: false,
         error: 'Status is required'
@@ -285,21 +293,53 @@ const updateAppointmentStatus = async (req, res) => {
     }
 
     if (!allowedStatuses.includes(status)) {
+      console.log('[updateAppointmentStatus] Error: Invalid status value:', status);
       return res.status(400).json({
         success: false,
         error: 'Invalid status value'
       });
     }
 
+    if (!req.user || !req.user.id) {
+      console.log('[updateAppointmentStatus] Error: No user in request');
+      return res.status(401).json({
+        success: false,
+        error: 'User authentication failed'
+      });
+    }
+
+    console.log('[updateAppointmentStatus] Calling Appointment.updateStatus with:', {
+      id,
+      doctor_id: req.user.id,
+      status
+    });
+
     const updated = await Appointment.updateStatus({ id, doctor_id: req.user.id, status });
+    
+    console.log('[updateAppointmentStatus] Update result:', updated);
+
     if (!updated) {
+      console.log('[updateAppointmentStatus] Error: Appointment not found or not owned by doctor');
       return res.status(404).json({ success: false, error: 'Appointment not found' });
     }
 
+    console.log('[updateAppointmentStatus] Success:', updated.id);
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('Update appointment error:', error);
-    res.status(500).json({ success: false, error: 'Server error' });
+    console.error('[updateAppointmentStatus] Caught error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      detail: error.detail,
+      constraint: error.constraint,
+      table: error.table,
+      column: error.column
+    });
+    res.status(500).json({ 
+      success: false, 
+      error: `Server error: ${error.message}`,
+      errorCode: error.code || 'UNKNOWN'
+    });
   }
 };
 

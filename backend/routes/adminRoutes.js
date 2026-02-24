@@ -8,7 +8,8 @@ const {
   listPatientsForAdmin,
   setDoctorVerification,
   setDoctorBlocked,
-  setPatientBlocked
+  setPatientBlocked,
+  clearAllData
 } = require('../controllers/adminController');
 
 router.post('/login', loginAdmin);
@@ -19,5 +20,6 @@ router.get('/patients', protect, authorize('admin'), listPatientsForAdmin);
 router.put('/doctors/:id/verify', protect, authorize('admin'), setDoctorVerification);
 router.put('/doctors/:id/block', protect, authorize('admin'), setDoctorBlocked);
 router.put('/patients/:id/block', protect, authorize('admin'), setPatientBlocked);
+router.delete('/clear-all-data', protect, authorize('admin'), clearAllData);
 
 module.exports = router;

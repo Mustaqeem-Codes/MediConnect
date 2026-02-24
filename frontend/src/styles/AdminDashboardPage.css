@@ -134,3 +134,32 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.mc-admin__panel--danger {
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+.mc-admin__panel--danger h2 {
+  color: #dc2626;
+}
+
+.mc-admin__btn--danger {
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mc-admin__btn--danger:hover {
+  background: #b91c1c;
+}
+
+.mc-admin__btn--danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

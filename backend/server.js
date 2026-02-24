@@ -2,6 +2,11 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
+
+// Load environment variables from .env in backend folder
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
 const { pool, initDB } = require('./config/database');
 const patientRoutes = require('./routes/patientRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
@@ -11,8 +16,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const { processPendingReportReminders } = require('./services/reportReminderService');
 
-// Load environment variables
-dotenv.config();
+// dotenv already loaded above
 
 const app = express();
 
