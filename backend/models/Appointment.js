@@ -189,10 +189,19 @@ class Appointment {
   static async updateStatus({ id, doctor_id, status }) {
     console.log('[Appointment.updateStatus] Starting with params:', { id, doctor_id, status });
     
+    // Ensure IDs are integers
+    const appointmentId = parseInt(id, 10);
+    const doctorIdInt = parseInt(doctor_id, 10);
+    
+    if (isNaN(appointmentId) || isNaN(doctorIdInt)) {
+      console.log('[Appointment.updateStatus] Invalid ID format:', { id, doctor_id });
+      return null;
+    }
+    
     try {
       // First verify the appointment exists
-      const checkQuery = `SELECT id, doctor_id, status, consultation_type FROM appointments WHERE id = $1`;
-      const checkResult = await pool.query(checkQuery, [id]);
+      const checkQuery = `SELECT id, doctor_id, status, consultation_type FROM appointments WHERE id = $1::int`;
+      const checkResult = await pool.query(checkQuery, [appointmentId]);
       console.log('[Appointment.updateStatus] Existing appointment:', checkResult.rows[0]);
 
       if (!checkResult.rows[0]) {
@@ -200,10 +209,10 @@ class Appointment {
         return null;
       }
 
-      if (checkResult.rows[0].doctor_id !== doctor_id) {
+      if (checkResult.rows[0].doctor_id !== doctorIdInt) {
         console.log('[Appointment.updateStatus] Doctor ID mismatch:', {
           appointmentDoctorId: checkResult.rows[0].doctor_id,
-          requestingDoctorId: doctor_id
+          requestingDoctorId: doctorIdInt
         });
         return null;
       }
@@ -224,7 +233,7 @@ class Appointment {
               ELSE report_due_at
             END,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2 AND doctor_id = $3
+        WHERE id = $2::int AND doctor_id = $3::int
         RETURNING id, global_sequence_id, patient_id, doctor_id, appointment_date, appointment_time,
                   consultation_type, appointment_type, duration_units, video_room_id,
                   status, reason, report_due_at, report_submitted_at,
@@ -232,7 +241,7 @@ class Appointment {
       `;
       
       console.log('[Appointment.updateStatus] Executing update query');
-      const result = await pool.query(query, [status, id, doctor_id]);
+      const result = await pool.query(query, [status, appointmentId, doctorIdInt]);
       console.log('[Appointment.updateStatus] Query result rows:', result.rows.length);
       
       return result.rows[0];
