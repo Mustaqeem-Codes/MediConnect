@@ -59,6 +59,18 @@ const ReportSubmissionModal = ({ appointmentId, patientName, onClose, onSubmit }
     recommendations: ''
   });
   
+  // Vitals - separate input fields
+  const [vitals, setVitals] = useState({
+    blood_pressure_systolic: '',
+    blood_pressure_diastolic: '',
+    pulse_rate: '',
+    temperature: '',
+    spo2: '',
+    respiratory_rate: '',
+    weight: '',
+    height: ''
+  });
+  
   // Structured diagnosis array
   const [diagnoses, setDiagnoses] = useState([]);
   const [diagnosisSearch, setDiagnosisSearch] = useState('');
@@ -72,11 +84,16 @@ const ReportSubmissionModal = ({ appointmentId, patientName, onClose, onSubmit }
   const [files, setFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('diagnosis');
+  const [activeTab, setActiveTab] = useState('vitals');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleVitalsChange = (e) => {
+    const { name, value } = e.target;
+    setVitals((prev) => ({ ...prev, [name]: value }));
   };
 
   // Diagnosis handlers
@@ -160,6 +177,20 @@ const ReportSubmissionModal = ({ appointmentId, patientName, onClose, onSubmit }
     // Filter out empty medications
     const validMedications = medications.filter(m => m.drug_name.trim());
 
+    // Build vitals object (only include non-empty values)
+    const vitalsData = {};
+    if (vitals.blood_pressure_systolic || vitals.blood_pressure_diastolic) {
+      vitalsData.blood_pressure = `${vitals.blood_pressure_systolic || '?'}/${vitals.blood_pressure_diastolic || '?'} mmHg`;
+      vitalsData.blood_pressure_systolic = vitals.blood_pressure_systolic;
+      vitalsData.blood_pressure_diastolic = vitals.blood_pressure_diastolic;
+    }
+    if (vitals.pulse_rate) vitalsData.pulse_rate = `${vitals.pulse_rate} bpm`;
+    if (vitals.temperature) vitalsData.temperature = `${vitals.temperature} °F`;
+    if (vitals.spo2) vitalsData.spo2 = `${vitals.spo2}%`;
+    if (vitals.respiratory_rate) vitalsData.respiratory_rate = `${vitals.respiratory_rate} breaths/min`;
+    if (vitals.weight) vitalsData.weight = `${vitals.weight} kg`;
+    if (vitals.height) vitalsData.height = `${vitals.height} cm`;
+
     setIsSubmitting(true);
 
     try {
@@ -178,6 +209,7 @@ const ReportSubmissionModal = ({ appointmentId, patientName, onClose, onSubmit }
         medication_array: validMedications,
         clinical_findings: formData.clinicalFindings.trim(),
         patient_instructions: formData.patientInstructions.trim(),
+        vitals: vitalsData,
         files
       });
       onClose();
@@ -218,6 +250,13 @@ const ReportSubmissionModal = ({ appointmentId, patientName, onClose, onSubmit }
         <div className="mc-report-modal__tabs">
           <button
             type="button"
+            className={`mc-report-modal__tab ${activeTab === 'vitals' ? 'active' : ''}`}
+            onClick={() => setActiveTab('vitals')}
+          >
+            Vitals
+          </button>
+          <button
+            type="button"
             className={`mc-report-modal__tab ${activeTab === 'diagnosis' ? 'active' : ''}`}
             onClick={() => setActiveTab('diagnosis')}
           >
@@ -251,6 +290,140 @@ const ReportSubmissionModal = ({ appointmentId, patientName, onClose, onSubmit }
             <div className="mc-report-modal__error">
               <span>⚠</span>
               {error}
+            </div>
+          )}
+
+          {/* Vitals Tab */}
+          {activeTab === 'vitals' && (
+            <div className="mc-report-modal__section">
+              <h3>Patient Vitals</h3>
+              <p className="mc-report-modal__hint">Record the patient&apos;s vital signs from the examination.</p>
+              
+              <div className="mc-report-modal__vitals-grid">
+                <div className="mc-report-modal__vital-group">
+                  <label>Blood Pressure</label>
+                  <div className="mc-report-modal__bp-inputs">
+                    <input
+                      type="number"
+                      name="blood_pressure_systolic"
+                      value={vitals.blood_pressure_systolic}
+                      onChange={handleVitalsChange}
+                      placeholder="Systolic"
+                      min="60"
+                      max="250"
+                    />
+                    <span className="mc-report-modal__bp-separator">/</span>
+                    <input
+                      type="number"
+                      name="blood_pressure_diastolic"
+                      value={vitals.blood_pressure_diastolic}
+                      onChange={handleVitalsChange}
+                      placeholder="Diastolic"
+                      min="40"
+                      max="150"
+                    />
+                    <span className="mc-report-modal__vital-unit">mmHg</span>
+                  </div>
+                </div>
+
+                <div className="mc-report-modal__vital-group">
+                  <label>Pulse Rate</label>
+                  <div className="mc-report-modal__vital-input">
+                    <input
+                      type="number"
+                      name="pulse_rate"
+                      value={vitals.pulse_rate}
+                      onChange={handleVitalsChange}
+                      placeholder="e.g., 72"
+                      min="30"
+                      max="220"
+                    />
+                    <span className="mc-report-modal__vital-unit">bpm</span>
+                  </div>
+                </div>
+
+                <div className="mc-report-modal__vital-group">
+                  <label>Temperature</label>
+                  <div className="mc-report-modal__vital-input">
+                    <input
+                      type="number"
+                      name="temperature"
+                      value={vitals.temperature}
+                      onChange={handleVitalsChange}
+                      placeholder="e.g., 98.6"
+                      step="0.1"
+                      min="90"
+                      max="110"
+                    />
+                    <span className="mc-report-modal__vital-unit">°F</span>
+                  </div>
+                </div>
+
+                <div className="mc-report-modal__vital-group">
+                  <label>SpO2 (Oxygen Saturation)</label>
+                  <div className="mc-report-modal__vital-input">
+                    <input
+                      type="number"
+                      name="spo2"
+                      value={vitals.spo2}
+                      onChange={handleVitalsChange}
+                      placeholder="e.g., 98"
+                      min="70"
+                      max="100"
+                    />
+                    <span className="mc-report-modal__vital-unit">%</span>
+                  </div>
+                </div>
+
+                <div className="mc-report-modal__vital-group">
+                  <label>Respiratory Rate</label>
+                  <div className="mc-report-modal__vital-input">
+                    <input
+                      type="number"
+                      name="respiratory_rate"
+                      value={vitals.respiratory_rate}
+                      onChange={handleVitalsChange}
+                      placeholder="e.g., 16"
+                      min="8"
+                      max="40"
+                    />
+                    <span className="mc-report-modal__vital-unit">breaths/min</span>
+                  </div>
+                </div>
+
+                <div className="mc-report-modal__vital-group">
+                  <label>Weight</label>
+                  <div className="mc-report-modal__vital-input">
+                    <input
+                      type="number"
+                      name="weight"
+                      value={vitals.weight}
+                      onChange={handleVitalsChange}
+                      placeholder="e.g., 70"
+                      step="0.1"
+                      min="1"
+                      max="500"
+                    />
+                    <span className="mc-report-modal__vital-unit">kg</span>
+                  </div>
+                </div>
+
+                <div className="mc-report-modal__vital-group">
+                  <label>Height</label>
+                  <div className="mc-report-modal__vital-input">
+                    <input
+                      type="number"
+                      name="height"
+                      value={vitals.height}
+                      onChange={handleVitalsChange}
+                      placeholder="e.g., 170"
+                      min="30"
+                      max="250"
+                    />
+                    <span className="mc-report-modal__vital-unit">cm</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

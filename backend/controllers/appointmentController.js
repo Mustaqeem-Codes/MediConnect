@@ -358,7 +358,8 @@ const submitAppointmentReport = async (req, res) => {
       diagnosis,
       medication_array,
       clinical_findings,
-      patient_instructions
+      patient_instructions,
+      vitals
     } = req.body;
 
     if (!treatment_summary || !String(treatment_summary).trim()) {
@@ -425,6 +426,16 @@ const submitAppointmentReport = async (req, res) => {
         }))
       : [];
 
+    // Combine vitals with clinical_findings
+    // Vitals are stored as JSON prefix in clinical_findings for backward compatibility
+    let combinedClinicalFindings = '';
+    if (vitals && typeof vitals === 'object' && Object.keys(vitals).length > 0) {
+      combinedClinicalFindings = `<!--VITALS_JSON-->${JSON.stringify(vitals)}<!--/VITALS_JSON-->\n`;
+    }
+    if (clinical_findings) {
+      combinedClinicalFindings += String(clinical_findings).trim();
+    }
+
     const updated = await Appointment.submitDoctorReport({
       id,
       doctor_id: req.user.id,
@@ -437,7 +448,7 @@ const submitAppointmentReport = async (req, res) => {
       recommendations: recommendations ? String(recommendations).trim() : null,
       diagnosis: validatedDiagnosis,
       medication_array: validatedMedicationArray,
-      clinical_findings: clinical_findings ? String(clinical_findings).trim() : null,
+      clinical_findings: combinedClinicalFindings || null,
       patient_instructions: patient_instructions ? String(patient_instructions).trim() : null
     });
 

@@ -35,6 +35,26 @@ const PatientDashboardPage = () => {
     return `${hour12}:${minutes} ${ampm}`;
   };
 
+  // Parse vitals from clinical_findings
+  const parseVitals = (clinicalFindings) => {
+    if (!clinicalFindings) return null;
+    const match = clinicalFindings.match(/<!--VITALS_JSON-->(.*?)<!--\/VITALS_JSON-->/s);
+    if (match) {
+      try {
+        return JSON.parse(match[1]);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Get clinical findings text without vitals JSON
+  const getClinicalText = (clinicalFindings) => {
+    if (!clinicalFindings) return '';
+    return clinicalFindings.replace(/<!--VITALS_JSON-->.*?<!--\/VITALS_JSON-->\n?/s, '').trim();
+  };
+
   const loadProfile = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -93,6 +113,8 @@ const PatientDashboardPage = () => {
           recommendations: item.recommendations,
           diagnosis: item.diagnosis,
           medication_array: item.medication_array,
+          clinical_findings: getClinicalText(item.clinical_findings),
+          vitals: parseVitals(item.clinical_findings),
           patient_instructions: item.patient_instructions,
           report_submitted_at: item.report_submitted_at,
           hasReport: !!item.report_submitted_at
@@ -157,6 +179,59 @@ const PatientDashboardPage = () => {
               <span>Duration: {med.duration || 'N/A'}</span>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderVitals = (vitals) => {
+    if (!vitals || Object.keys(vitals).length === 0) return null;
+    return (
+      <div className="mc-report__section">
+        <h5>Vitals</h5>
+        <div className="mc-report__vitals-grid">
+          {vitals.blood_pressure && (
+            <div className="mc-report__vital-item">
+              <span className="mc-report__vital-label">Blood Pressure</span>
+              <span className="mc-report__vital-value">{vitals.blood_pressure}</span>
+            </div>
+          )}
+          {vitals.pulse_rate && (
+            <div className="mc-report__vital-item">
+              <span className="mc-report__vital-label">Pulse Rate</span>
+              <span className="mc-report__vital-value">{vitals.pulse_rate}</span>
+            </div>
+          )}
+          {vitals.temperature && (
+            <div className="mc-report__vital-item">
+              <span className="mc-report__vital-label">Temperature</span>
+              <span className="mc-report__vital-value">{vitals.temperature}</span>
+            </div>
+          )}
+          {vitals.spo2 && (
+            <div className="mc-report__vital-item">
+              <span className="mc-report__vital-label">SpO2</span>
+              <span className="mc-report__vital-value">{vitals.spo2}</span>
+            </div>
+          )}
+          {vitals.respiratory_rate && (
+            <div className="mc-report__vital-item">
+              <span className="mc-report__vital-label">Respiratory Rate</span>
+              <span className="mc-report__vital-value">{vitals.respiratory_rate}</span>
+            </div>
+          )}
+          {vitals.weight && (
+            <div className="mc-report__vital-item">
+              <span className="mc-report__vital-label">Weight</span>
+              <span className="mc-report__vital-value">{vitals.weight}</span>
+            </div>
+          )}
+          {vitals.height && (
+            <div className="mc-report__vital-item">
+              <span className="mc-report__vital-label">Height</span>
+              <span className="mc-report__vital-value">{vitals.height}</span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -314,6 +389,8 @@ const PatientDashboardPage = () => {
                                 <span className="mc-report__date">Submitted: {formatDate(appointment.report_submitted_at)}</span>
                               </div>
 
+                              {renderVitals(appointment.vitals)}
+
                               {renderDiagnosis(appointment.diagnosis)}
 
                               {appointment.treatment_summary && (
@@ -325,8 +402,15 @@ const PatientDashboardPage = () => {
 
                               {appointment.medical_report && (
                                 <div className="mc-report__section">
-                                  <h5>Clinical Notes</h5>
+                                  <h5>Medical Analysis</h5>
                                   <p>{appointment.medical_report}</p>
+                                </div>
+                              )}
+
+                              {appointment.clinical_findings && (
+                                <div className="mc-report__section">
+                                  <h5>Clinical Findings</h5>
+                                  <p>{appointment.clinical_findings}</p>
                                 </div>
                               )}
 

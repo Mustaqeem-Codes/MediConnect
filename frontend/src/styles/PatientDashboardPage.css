@@ -577,6 +577,36 @@
   line-height: 1.8;
 }
 
+/* Vitals Grid */
+.mc-report__vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.mc-report__vital-item {
+  background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
+  padding: 0.75rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.mc-report__vital-label {
+  font-size: 0.75rem;
+  color: #065F46;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.mc-report__vital-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #047857;
+}
+
 .mc-report__pending {
   background: var(--background-alt, #F8FAFE);
   padding: 1.5rem;

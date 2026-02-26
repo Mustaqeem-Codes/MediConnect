@@ -490,6 +490,69 @@
   text-align: center;
 }
 
+/* Vitals Section Styles */
+.mc-report-modal__hint {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.mc-report-modal__vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.mc-report-modal__vital-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mc-report-modal__vital-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.mc-report-modal__vital-input,
+.mc-report-modal__bp-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mc-report-modal__vital-input input,
+.mc-report-modal__bp-inputs input {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  color: #111827;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mc-report-modal__vital-input input:focus,
+.mc-report-modal__bp-inputs input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.mc-report-modal__bp-separator {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.mc-report-modal__vital-unit {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  white-space: nowrap;
+  min-width: 70px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .mc-report-modal--ehr {
@@ -509,5 +572,9 @@
 
   .mc-report-modal__medication-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .mc-report-modal__vitals-grid {
+    grid-template-columns: 1fr;
   }
 }

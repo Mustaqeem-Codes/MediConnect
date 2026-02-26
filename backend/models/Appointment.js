@@ -69,7 +69,7 @@ class Appointment {
               a.consultation_type, a.appointment_type, a.duration_units, a.hour_sequence_id,
               a.video_room_id, a.status, a.reason,
               a.treatment_summary, a.medical_report, a.medicines, a.prescriptions, a.recommendations,
-              a.diagnosis, a.medication_array, a.patient_instructions,
+              a.diagnosis, a.medication_array, a.clinical_findings, a.patient_instructions,
               a.report_due_at, a.report_submitted_at, a.reminder_sent_at, a.interaction_closed_at,
               a.dispute_raised_at, a.dispute_raised_by, a.dispute_resolved_at, a.dispute_resolution,
              a.created_at,
