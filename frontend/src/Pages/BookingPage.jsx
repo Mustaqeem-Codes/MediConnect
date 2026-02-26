@@ -19,6 +19,26 @@ const BookingPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Check if user is a patient
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    if (!token) {
+      navigate('/login?role=patient');
+      return;
+    }
+    
+    try {
+      const user = userStr ? JSON.parse(userStr) : null;
+      if (user && user.role && user.role !== 'patient') {
+        setError('Only patients can book appointments. Please login with a patient account.');
+      }
+    } catch {
+      // If parsing fails, allow the API to handle authorization
+    }
+  }, [navigate]);
+
   const toLabel = (value) => {
     const [hours, minutes] = value.split(':');
     const date = new Date();
@@ -183,9 +203,6 @@ const BookingPage = () => {
           <p>Availability: {doctor?.availability_mode === '24_7' ? '24/7 (any hour)' : 'Scheduled slots'}</p>
         </div>
 
-        {error && <div className="mc-booking__error">{error}</div>}
-        {success && <div className="mc-booking__success">{success}</div>}
-
         <div className="mc-booking__grid">
           <div className="mc-booking__panel">
             <h3>Select Date</h3>
@@ -247,6 +264,9 @@ const BookingPage = () => {
         <button className="mc-booking__cta" onClick={handleSubmit} disabled={loading}>
           {loading ? 'Booking...' : 'Confirm Appointment'}
         </button>
+
+        {error && <div className="mc-booking__error">{error}</div>}
+        {success && <div className="mc-booking__success">{success}</div>}
       </section>
     </div>
   );
