@@ -1,0 +1,4 @@
+[    4068ms] [WARNING] Manifest: property 'start_url' ignored, should be same origin as document. @ https://mediconnect.vercel.app/site.webmanifest:0
+[   26274ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://mediconnect.com.br/assets/images/artboard.webp:0
+[   47340ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://mediconnect.com.br/assets/images/artboard.webp:0
+[   49886ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://mediconnect.vercel.app/undefined:0

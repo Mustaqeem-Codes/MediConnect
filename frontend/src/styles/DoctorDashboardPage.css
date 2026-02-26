@@ -68,7 +68,7 @@
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 
@@ -168,6 +168,10 @@
     width: 100%;
     text-align: center;
   }
+
+  .mc-doctor-dashboard__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Header with refresh button */
@@ -232,4 +236,80 @@
 
 .mc-doctor-dashboard__error-retry:hover {
   background: #991B1B;
+}
+
+/* Full-width Availability Section */
+.mc-doctor-dashboard__availability-section {
+  max-width: 1200px;
+  margin: 1.5rem auto 0;
+  background: white;
+  border-radius: 18px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 15px 35px rgba(10, 25, 47, 0.08);
+  border: 1px solid rgba(225, 232, 240, 0.8);
+}
+
+.mc-doctor-dashboard__availability-section h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+.mc-doctor-dashboard__availability-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.mc-doctor-dashboard__mode-selector {
+  display: flex;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+.mc-doctor-dashboard__mode-selector label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-light, #2D3A5E);
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border, #E1E8F0);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.mc-doctor-dashboard__mode-selector label:has(input:checked) {
+  border-color: var(--accent, #00A896);
+  background: rgba(0, 168, 150, 0.08);
+}
+
+.mc-doctor-dashboard__slots-container {
+  flex: 1;
+  min-width: 300px;
+}
+
+.mc-doctor-dashboard__slots-container .mc-doctor-dashboard__muted {
+  margin-bottom: 0.75rem;
+}
+
+.mc-doctor-dashboard__slot-grid-wide {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .mc-doctor-dashboard__availability-content {
+    flex-direction: column;
+  }
+
+  .mc-doctor-dashboard__slots-container {
+    width: 100%;
+  }
+
+  .mc-doctor-dashboard__slot-grid-wide {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }

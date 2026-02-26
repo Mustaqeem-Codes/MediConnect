@@ -216,21 +216,44 @@ const DoctorDashboardPage = () => {
         )}
 
         {!loading && !error && (
-          <div className="mc-doctor-dashboard__grid">
-            <section className="mc-doctor-dashboard__card">
-              <h2>Upcoming Appointments</h2>
-              <ul className="mc-doctor-dashboard__list">
-                {upcomingAppointments.length === 0 ? (
-                  <li>No upcoming appointments.</li>
-                ) : upcomingAppointments.map((item) => (
-                  <li key={item.id}>
-                    {formatDate(item.appointment_date)} · {formatTime(item.appointment_time)} - {item.patient_name}
-                  </li>
-                ))}
-              </ul>
-            </section>
+          <>
+            {/* Top row: 3 cards side by side */}
+            <div className="mc-doctor-dashboard__grid">
+              <section className="mc-doctor-dashboard__card">
+                <h2>Upcoming Appointments</h2>
+                <ul className="mc-doctor-dashboard__list">
+                  {upcomingAppointments.length === 0 ? (
+                    <li>No upcoming appointments.</li>
+                  ) : upcomingAppointments.map((item) => (
+                    <li key={item.id}>
+                      {formatDate(item.appointment_date)} · {formatTime(item.appointment_time)} - {item.patient_name}
+                    </li>
+                  ))}
+                </ul>
+              </section>
 
-            <section className="mc-doctor-dashboard__card">
+              <section className="mc-doctor-dashboard__card">
+                <h2>Summary</h2>
+                <p className="mc-doctor-dashboard__metric">{appointments.length}</p>
+                <span className="mc-doctor-dashboard__muted">Total appointments on your account</span>
+              </section>
+
+              <section className="mc-doctor-dashboard__card">
+                <h2>Notifications</h2>
+                {notifications.length === 0 ? (
+                  <p className="mc-doctor-dashboard__muted">No notifications.</p>
+                ) : (
+                  <ul className="mc-doctor-dashboard__list">
+                    {notifications.slice(0, 5).map((item) => (
+                      <li key={item.id}>{item.title} - {item.body}</li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+
+            {/* Full-width Verification & Availability section */}
+            <section className="mc-doctor-dashboard__availability-section">
               <h2>Verification & Availability</h2>
               {!profile?.is_approved ? (
                 <p className="mc-doctor-dashboard__muted">Your profile is pending admin verification.</p>
@@ -242,81 +265,64 @@ const DoctorDashboardPage = () => {
                       : 'Your timetable is configured and visible to patients.'}
                   </p>
 
-                  <div className="mc-doctor-dashboard__actions">
-                    <label>
-                      <input
-                        type="radio"
-                        name="availabilityMode"
-                        value="custom"
-                        checked={availabilityMode === 'custom'}
-                        onChange={() => setAvailabilityMode('custom')}
-                      />
-                      Custom slots
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="availabilityMode"
-                        value="24_7"
-                        checked={availabilityMode === '24_7'}
-                        onChange={() => setAvailabilityMode('24_7')}
-                      />
-                      24/7
-                    </label>
-                  </div>
+                  <div className="mc-doctor-dashboard__availability-content">
+                    <div className="mc-doctor-dashboard__mode-selector">
+                      <label>
+                        <input
+                          type="radio"
+                          name="availabilityMode"
+                          value="custom"
+                          checked={availabilityMode === 'custom'}
+                          onChange={() => setAvailabilityMode('custom')}
+                        />
+                        Custom slots
+                      </label>
+                      <label>
+                        <input
+                          type="radio"
+                          name="availabilityMode"
+                          value="24_7"
+                          checked={availabilityMode === '24_7'}
+                          onChange={() => setAvailabilityMode('24_7')}
+                        />
+                        24/7
+                      </label>
+                    </div>
 
-                  {availabilityMode === 'custom' && (
-                    <>
-                      <p className="mc-doctor-dashboard__muted" style={{ marginTop: '0.75rem' }}>
-                        Select the hours you are available. Patients book in hourly windows with capacity-based queueing.
-                      </p>
-                      <div className="mc-doctor-dashboard__slot-grid" role="group" aria-label="Availability hours">
-                        {HOUR_SLOTS.map((slot) => (
-                          <button
-                            key={slot}
-                            type="button"
-                            className={availabilitySlots.includes(slot)
-                              ? 'mc-doctor-dashboard__slot-btn is-active'
-                              : 'mc-doctor-dashboard__slot-btn'}
-                            onClick={() => toggleSlot(slot)}
-                          >
-                            {formatTime(slot)}
-                          </button>
-                        ))}
+                    {availabilityMode === 'custom' && (
+                      <div className="mc-doctor-dashboard__slots-container">
+                        <p className="mc-doctor-dashboard__muted">
+                          Select the hours you are available. Patients book in hourly windows with capacity-based queueing.
+                        </p>
+                        <div className="mc-doctor-dashboard__slot-grid-wide" role="group" aria-label="Availability hours">
+                          {HOUR_SLOTS.map((slot) => (
+                            <button
+                              key={slot}
+                              type="button"
+                              className={availabilitySlots.includes(slot)
+                                ? 'mc-doctor-dashboard__slot-btn is-active'
+                                : 'mc-doctor-dashboard__slot-btn'}
+                              onClick={() => toggleSlot(slot)}
+                            >
+                              {formatTime(slot)}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </>
-                  )}
+                    )}
 
-                  <button
-                    className="mc-doctor-dashboard__button"
-                    onClick={handleSaveAvailability}
-                    disabled={savingAvailability}
-                  >
-                    {savingAvailability ? 'Saving...' : 'Save Availability'}
-                  </button>
+                    <button
+                      className="mc-doctor-dashboard__button"
+                      onClick={handleSaveAvailability}
+                      disabled={savingAvailability}
+                    >
+                      {savingAvailability ? 'Saving...' : 'Save Availability'}
+                    </button>
+                  </div>
                 </>
               )}
             </section>
-
-            <section className="mc-doctor-dashboard__card">
-              <h2>Summary</h2>
-              <p className="mc-doctor-dashboard__metric">{appointments.length}</p>
-              <span className="mc-doctor-dashboard__muted">Total appointments on your account</span>
-            </section>
-
-            <section className="mc-doctor-dashboard__card">
-              <h2>Notifications</h2>
-              {notifications.length === 0 ? (
-                <p className="mc-doctor-dashboard__muted">No notifications.</p>
-              ) : (
-                <ul className="mc-doctor-dashboard__list">
-                  {notifications.slice(0, 5).map((item) => (
-                    <li key={item.id}>{item.title} - {item.body}</li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
+          </>
         )}
       </div>
     </div>
